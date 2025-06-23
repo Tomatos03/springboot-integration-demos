@@ -5,3 +5,6 @@ spring:
     username: Tomatos03
     password: 20030503
     virtual-host: "my_vhost"
+    listener:
+      simple:
+        prefetch: 1  # 每次只分配1条消息给消费者，处理完再分配下一条
