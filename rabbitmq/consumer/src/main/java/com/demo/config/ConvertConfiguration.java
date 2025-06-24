@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class ConvertConfiguration {
-    // 注册了Jackson的转化器后,会替换默认的Java序列化实现
+    // 注册了Jackson的转化器后,会替换Java默认对实现了Serializable接口对象的序列化
     @Bean
     Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
