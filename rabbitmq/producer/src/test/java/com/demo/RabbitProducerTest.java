@@ -36,6 +36,15 @@ public class RabbitProducerTest {
     }
 
     @Test
+    public void testSendMessageToQueue0() {
+        Message message = new Message("Hello, RabbitMQ!".getBytes());
+//        使用其他算法生成ID
+//        message.getMessageProperties().setMessageId();
+        String queueName = "simple.queue";
+        rabbitTemplate.convertAndSend(queueName, message);
+    }
+
+    @Test
     public void testSendMessageToFanoutExchange() {
         String message = "Hello, RabbitMQ!";
         String exchangeName = "rabbitmq.fanout";

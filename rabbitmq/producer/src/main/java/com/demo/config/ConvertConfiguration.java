@@ -15,6 +15,9 @@ public class ConvertConfiguration {
     // 注册了Jackson的转化器后,会替换默认的Java序列化实现
     @Bean
     Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
-        return new Jackson2JsonMessageConverter();
+        Jackson2JsonMessageConverter jjmc = new Jackson2JsonMessageConverter();
+        // 设置是否创建消息ID, jackson默认使用Java提供的UUID工具类生成一个ID作为消息ID
+        jjmc.setCreateMessageIds(true);
+        return jjmc;
     }
 }
