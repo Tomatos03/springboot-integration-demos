@@ -2,6 +2,9 @@ package com.demo;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageBuilder;
+import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,5 +88,25 @@ public class RabbitProducerTest {
                 "age", 18
         );
         rabbitTemplate.convertAndSend(queueName, person);
+    }
+
+    @Test
+    public void sendBulkMessagesToQueue() {
+        String queueName = "simple.queue";
+        Message message = MessageBuilder.withBody("Hello, RabbitMQ!".getBytes())
+                                      .setDeliveryMode(MessageDeliveryMode.NON_PERSISTENT)
+                                      .build();
+        /*
+         * 持久消息
+         *  开启生产者确认时大约耗时: 29s
+         *  不开启生产者确认时大约耗时: 10s
+         * 不持久化消息
+         *  开启生产者确认时大约耗时: 27s
+         *  不开启生产者确认时大约耗时: 9s
+         */
+        for (int i = 0; i < 1_000_000; ++i) {
+            rabbitTemplate.convertAndSend(queueName, message);
+        }
+        log.info("已发送1000000条消息到队列: {}", queueName);
     }
 }
