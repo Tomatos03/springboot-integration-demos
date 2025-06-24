@@ -7,4 +7,5 @@ spring:
     virtual-host: "my_vhost"
     listener:
       simple:
+        # 多个消费者从同一个队列中消费消息时，默认情况下会公平分配消息给消费者, 通过配置prefetch实现能者多劳
         prefetch: 1  # 每次只分配1条消息给消费者，处理完再分配下一条
