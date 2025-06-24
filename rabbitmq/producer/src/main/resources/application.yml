@@ -12,3 +12,22 @@ spring:
         initial-interval: 1000  # 初始重试间隔，单位毫秒，默认1000
         multiplier: 2.0         # 间隔递增倍数，默认1.0（不递增）
         max-interval: 7000     # 最大重试间隔，单位毫秒，默认10000
+    publisher-confirm-type: correlated # 发布确认模式, 配置了这个属性才能够在发送消息的时候配置回调函数
+    publisher-returns: true  # 消息返回机制, 配置了这个属性才能够配置路由无法处理消息的回调函数
+
+
+  # 发布确认模式（publisher-confirms-type）配置说明：
+  # 1. none
+  #   含义：不开启发布确认功能。
+  #   效果：RabbitTemplate 不会等待 RabbitMQ Broker 的确认响应，消息发送后不关心是否真正到达 Broker。
+  #   适用场景：对可靠性要求不高的场景。
+  #
+  # 2. simple
+  #   含义：开启简单的发布确认模式。
+  #   效果：RabbitTemplate 会等待 RabbitMQ Broker 的确认（ack/nack），但只支持同步确认（即发送消息后阻塞等待确认）。
+  #   适用场景：对可靠性有要求，但对性能要求不高的场景。
+  #
+  # 3. correlated
+  #   含义：开启相关性发布确认模式（推荐）。
+  #   效果：支持异步回调的发布确认，可以为每条消息设置唯一的 correlationData，收到确认后通过回调处理结果，适合高并发和需要追踪消息状态的场景。
+  #   适用场景：对可靠性和性能都有要求，且需要追踪每条消息状态的场景。
