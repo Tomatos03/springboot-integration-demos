@@ -25,8 +25,9 @@ public class Consumer {
                     arguments = @Argument(name = "x-queue-mode", value = "lazy") // 设置队列为延迟模式, 需要RabbitMQ 3.6.0及以上版本
             )
     )
-    public void receiveMessage(String message) {
+    public void receiveMessage(String message) throws Exception {
         System.out.println("Received message: " + message);
+        throw new Exception("模拟异常");
     }
 
     // 监听的队列存储了Json格式的消息, 消息会被自动转换为Map对象

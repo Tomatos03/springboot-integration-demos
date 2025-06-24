@@ -30,7 +30,7 @@ public class RabbitProducerTest {
     public void testSendMessageToQueue() {
         String message = "Hello, RabbitMQ!";
         String queueName = "simple.queue";
-        for (int i = 0; i < 50; ++i) {
+        for (int i = 0; i < 1; ++i) {
             rabbitTemplate.convertAndSend(queueName,message + i);
         }
     }
