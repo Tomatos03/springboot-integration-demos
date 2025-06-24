@@ -13,11 +13,12 @@ public class RabbitConfiguration {
     @Bean
     public Queue simpleQueue() {
         return new Queue("simple.queue", true);
-        // 或使用提供的Builder类创建一个简单的队列, 多参数的时候适用
-        // return QueueBuilder.durable("simple.queue")
-        //                    .exclusive()
-        //                    .autoDelete()
-        //                    .build();
+//                 或使用提供的Builder类创建一个简单的队列, 多参数的时候适用
+//        return QueueBuilder.durable("simple.queue")
+//                           .exclusive()
+//                           .autoDelete()
+//                           .lazy() // 是否开启懒惰队列
+//                           .build();
     }
 
     @Bean

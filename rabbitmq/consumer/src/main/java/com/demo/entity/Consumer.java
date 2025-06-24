@@ -1,10 +1,7 @@
 package com.demo.entity;
 
 import org.springframework.amqp.core.ExchangeTypes;
-import org.springframework.amqp.rabbit.annotation.Exchange;
-import org.springframework.amqp.rabbit.annotation.Queue;
-import org.springframework.amqp.rabbit.annotation.QueueBinding;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.annotation.*;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -24,7 +21,8 @@ public class Consumer {
             bindings = @QueueBinding(
                     value = @Queue(value = "simple.queue", durable = "true"),
                     exchange = @Exchange(value = "rabbitmq.fanout", type = ExchangeTypes.FANOUT),
-                    key = "routeKey"
+                    key = "routeKey",
+                    arguments = @Argument(name = "x-queue-mode", value = "lazy") // 设置队列为延迟模式, 需要RabbitMQ 3.6.0及以上版本
             )
     )
     public void receiveMessage(String message) {
