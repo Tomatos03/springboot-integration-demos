@@ -5,3 +5,10 @@ spring:
     username: Tomatos03
     password: 20030503
     virtual-host: "my_vhost"
+    template:
+      retry: # 发送消息失败时尝试重新连接服务端, 在尝试重连时会阻塞等待的状态
+        enabled: true
+        max-attempts: 5         # 最大尝试次数（包括第一次），默认3
+        initial-interval: 1000  # 初始重试间隔，单位毫秒，默认1000
+        multiplier: 2.0         # 间隔递增倍数，默认1.0（不递增）
+        max-interval: 7000     # 最大重试间隔，单位毫秒，默认10000
