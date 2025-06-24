@@ -9,3 +9,9 @@ spring:
       simple:
         # 多个消费者从同一个队列中消费消息时，默认情况下会公平分配消息给消费者, 通过配置prefetch实现能者多劳
         prefetch: 1  # 每次只分配1条消息给消费者，处理完再分配下一条
+        acknowledge-mode: auto # 默认值为 none
+
+# acknowledge-mode有三种模式:
+# 1. auto: 自动确认，消息被监听方法成功消费后自动确认(由spring-amqp自动处理)，适用于大多数场景
+# 2. manual: 手动确认，需要在代码中手动调用acknowledge方法确认消息已被消费，适用于需要精确控制消息确认的场景
+# 3. none: 不确认，消息投递后不需要确认（不推荐，可能导致消息丢失）
