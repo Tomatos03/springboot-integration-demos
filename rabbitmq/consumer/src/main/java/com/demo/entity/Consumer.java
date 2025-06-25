@@ -1,5 +1,6 @@
 package com.demo.entity;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.ExchangeTypes;
 import org.springframework.amqp.rabbit.annotation.*;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import java.util.Map;
  * @Date: 2025/6/22 21:08
  */
 
+@Slf4j
 @Component
 public class Consumer {
     // 只监听指定的队列
@@ -86,5 +88,21 @@ public class Consumer {
     @RabbitListener(queues = "topic.queue2")
     public void receiveTopicExchangeMessage1(String message) {
         System.out.printf("[1]Received TopicExchange message [%s]%n", message);
+    }
+
+    /**
+     * 通过注解的方法配置延迟交换机 <br>
+     * 依赖插件: https://github.com/rabbitmq/rabbitmq-delayed-message-exchange<br>
+     */
+    @RabbitListener(
+        bindings = @QueueBinding(
+                value = @Queue(value = "delayed.queue", durable = "true"),
+                // delayed = true 设置交换机为延迟交换机
+                exchange = @Exchange(value = "rabbitmq.delayed", delayed = "true"),
+                key = "delayed.key"
+        )
+    )
+    public void receiveDelayedMessage(String message) {
+        log.info("Received delayed message: {}", message);
     }
 }

@@ -10,6 +10,18 @@ import org.springframework.context.annotation.Bean;
  */
 //@Configuration
 public class RabbitConfiguration {
+    /**
+     * 通过配置类的方法配置延迟交换机 <br>
+     * 依赖插件: https://github.com/rabbitmq/rabbitmq-delayed-message-exchange<br>
+     */
+    @Bean
+    public Exchange DelayExChange() {
+        return ExchangeBuilder.directExchange("dlx.exchange")
+                              .delayed() // 设置交换机为延迟交换机, 用于处理延迟消息
+                              .durable(true)
+                              .build();
+    }
+
     @Bean
     public Queue simpleQueue() {
         return new Queue("simple.queue", true);

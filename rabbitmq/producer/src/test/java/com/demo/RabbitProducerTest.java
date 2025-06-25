@@ -118,4 +118,15 @@ public class RabbitProducerTest {
         }
         log.info("已发送1000000条消息到队列: {}", queueName);
     }
+
+    @Test
+    public void testDelaySendMsgToQueue() {
+        String exchangeName = "rabbitmq.delayed";
+        String routeKey = "delayed.key";
+        rabbitTemplate.convertAndSend(exchangeName, routeKey, "delayed message", message -> {
+            // 设置延迟时间为10秒
+            message.getMessageProperties().setDelayLong(10000L);
+            return message;
+        });
+    }
 }
