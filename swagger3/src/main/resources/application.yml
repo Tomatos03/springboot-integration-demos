@@ -1,0 +1,7 @@
+# 自定义配置Swagger3
+server:
+  port: 8081
+
+spring:
+  config:
+    import: classpath:swagger.yaml # 导入swagger.yaml文件之中的内容

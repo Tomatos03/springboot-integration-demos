@@ -1,0 +1,5 @@
+springdoc:
+  swagger-ui:
+    path: /ui # 指定Swagger-UI前端的访问地址
+#  如果没有指定这个属性SpringBoot会自动将扫描到的@Controoller添加到Swagger-UI之中
+#  packages-to-scan: com.demo.controller
