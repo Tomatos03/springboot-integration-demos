@@ -18,6 +18,7 @@
 
     <modules>
         <module>rabbitmq</module>
+        <module>mybatis-generator</module>
     </modules>
 
     <properties>

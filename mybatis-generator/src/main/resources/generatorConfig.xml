@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<!-- 官网文档参考: https://mybatis.org/generator/configreference/xmlconfig.html -->
+<generatorConfiguration>
+    <!-- 导入其他properties配置文件 -->
+    <properties resource="generator.properties"/>
+    <!--
+        defaultModelType 可选值：
+        flat（推荐）：每个表生成一个 Model 类，字段全在类中，简单易维护。
+        hierarchical：为每表生成 Key、Base、Model 三个类，适合复杂主键，实际很少用。
+        conditional：有复合主键用 hierarchical，否则用 flat。
+    -->
+    <context id="simple" targetRuntime="MyBatis3" defaultModelType="flat">
+        <property name="javaFileEncoding" value="UTF-8"/>
+        <!-- 指定数连接数据库相关信息 -->
+        <jdbcConnection driverClass="${mariadb.driver_class}"
+                        connectionURL="${mariadb.url}"
+                        userId="${mariadb.username}"
+                        password="${mariadb.password}"/>
+
+        <!-- targetPackage指定生成物存放目录 -->
+        <!-- targetProject指定Java源代码目录 -->
+        <!-- 生成Java实体类 -->
+        <javaModelGenerator targetPackage="com.demo.model" targetProject="src/main/java"/>
+        <!-- 生成Mapper类对应的Xml文件 -->
+        <sqlMapGenerator targetPackage="com.demo.mapper" targetProject="src/main/resources"/>
+        <!--
+          XMLMAPPER：生成接口和 XML 映射文件分离的标准 MyBatis 方式。
+          ANNOTATEDMAPPER：生成带注解的 Mapper 接口（不生成 XML 文件）。
+          MIXEDMAPPER：接口和 XML 混合。
+        -->
+        <!-- 生成Mapper类 -->
+        <javaClientGenerator type="XMLMAPPER" targetPackage="com.demo.mapper" targetProject="src/main/java"/>
+        <!-- 映射到数据库之中对应的表 -->
+        <table tableName="sms_home_recommend_product" domainObjectName="RecommendProduct"/>
+    </context>
+</generatorConfiguration>
+
+<!--<generatorConfiguration>-->
+<!--    <properties resource="generator.properties"/>-->
+<!--    <context id="MySqlContext" targetRuntime="MyBatis3" defaultModelType="flat">-->
+<!--        &lt;!&ndash; 配置SQL语句中的前置分隔符 &ndash;&gt;-->
+<!--        <property name="beginningDelimiter" value="`"/>-->
+<!--        &lt;!&ndash; 配置SQL语句中的后置分隔符 &ndash;&gt;-->
+<!--        <property name="endingDelimiter" value="`"/>-->
+<!--        &lt;!&ndash; 配置生成Java文件的编码 &ndash;&gt;-->
+<!--        <property name="javaFileEncoding" value="UTF-8"/>-->
+<!--        &lt;!&ndash; 为模型生成序列化方法 &ndash;&gt;-->
+<!--        <plugin type="org.mybatis.generator.plugins.SerializablePlugin"/>-->
+<!--        &lt;!&ndash; 为生成的Java模型创建一个toString方法 &ndash;&gt;-->
+<!--        <plugin type="org.mybatis.generator.plugins.ToStringPlugin"/>-->
+<!--        &lt;!&ndash; 生成mapper.xml时覆盖原文件 &ndash;&gt;-->
+<!--        <plugin type="org.mybatis.generator.plugins.UnmergeableXmlMappersPlugin" />-->
+<!--        <commentGenerator type="com.macro.mall.CommentGenerator">-->
+<!--            &lt;!&ndash; 是否阻止生成的注释 &ndash;&gt;-->
+<!--            <property name="suppressAllComments" value="true"/>-->
+<!--            &lt;!&ndash; 是否阻止生成的注释包含时间戳 &ndash;&gt;-->
+<!--            <property name="suppressDate" value="true"/>-->
+<!--            &lt;!&ndash; 是否添加数据库表的备注信息 &ndash;&gt;-->
+<!--            <property name="addRemarkComments" value="true"/>-->
+<!--        </commentGenerator>-->
+<!--        &lt;!&ndash; 配置MBG要连接的数据库信息 &ndash;&gt;-->
+<!--        <jdbcConnection driverClass="${jdbc.driverClass}"-->
+<!--                        connectionURL="${jdbc.connectionURL}"-->
+<!--                        userId="${jdbc.userId}"-->
+<!--                        password="${jdbc.password}">-->
+<!--            &lt;!&ndash; 解决mysql驱动升级到8.0后不生成指定数据库代码的问题 &ndash;&gt;-->
+<!--            <property name="nullCatalogMeansCurrent" value="true" />-->
+<!--        </jdbcConnection>-->
+<!--        &lt;!&ndash; 用于控制实体类的生成 &ndash;&gt;-->
+<!--        <javaModelGenerator targetPackage="com.macro.mall.model" targetProject="mall-mbg\src\main\java"/>-->
+<!--        &lt;!&ndash; 用于控制Mapper.xml文件的生成 &ndash;&gt;-->
+<!--        <sqlMapGenerator targetPackage="com.macro.mall.mapper" targetProject="mall-mbg\src\main\resources"/>-->
+<!--        &lt;!&ndash; 用于控制Mapper接口的生成 &ndash;&gt;-->
+<!--        <javaClientGenerator type="XMLMAPPER" targetPackage="com.macro.mall.mapper"-->
+<!--                             targetProject="mall-mbg\src\main\java"/>-->
+<!--        &lt;!&ndash; 配置需要生成的表，生成全部表tableName设为% &ndash;&gt;-->
+<!--        <table tableName="%">-->
+<!--            &lt;!&ndash; 用来指定主键生成策略 &ndash;&gt;-->
+<!--            <generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+<!--        </table>-->
+<!--    </context>-->
+<!--</generatorConfiguration>-->
