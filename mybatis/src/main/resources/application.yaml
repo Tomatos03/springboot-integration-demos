@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    username: Tomatos
+    password: 20030503
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://localhost:3306/mybatis_demo
+
+# Mybatis配置
+mybatis:
+  configuration:
+    # Mybatis自带日志实现
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 驼峰命名
+    map-underscore-to-camel-case: true
+  # 指定XML文件位置, 不指定的时候默认与Mapper类声明位置一致
+  mapper-locations: classpath:com/demo/mapper/*.xml
