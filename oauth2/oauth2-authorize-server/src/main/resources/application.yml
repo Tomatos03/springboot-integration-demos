@@ -1,0 +1,34 @@
+server:
+  port: 9000
+
+logging:
+  level:
+    org.springframework.security: trace
+
+spring:
+  security:
+    user:
+      name: 'root'
+      password: '{noop}zjlljz'
+    oauth2:
+      authorizationserver:
+        client:
+          oidc-client:
+            registration:
+              client-id: "userinfo-client"
+              client-secret: "{noop}secret"
+              client-authentication-methods:
+                - "client_secret_basic"
+              authorization-grant-types:
+                - "authorization_code"
+                - "refresh_token"
+              redirect-uris:
+                - "http://localhost:5173/implicit"
+              post-logout-redirect-uris:
+                - "http://localhost:5173"
+              scopes:
+                - "openid"
+                - "read_userinfo"
+            require-authorization-consent: true
+        endpoint:
+          authorization-uri: /oauth2/authorize # 配置授权端点

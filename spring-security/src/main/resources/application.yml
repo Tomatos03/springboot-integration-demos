@@ -9,4 +9,4 @@ spring:
 logging:
   level:
     # 配置 org.springframework.security 这个包下的类日志级别都是 trace
-    org.springframework.security: trace
+    org.springframework.security: debug

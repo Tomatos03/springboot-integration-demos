@@ -1,0 +1,14 @@
+server:
+  port: 8081
+
+logging:
+  level:
+    org.springframework.security: trace
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # 该值表示授权服务器签发的 JWT 令牌中 iss（发行者）声明的值。资源服务器会使用该属性进行自我配置，自动发现授权服务器的公钥，并据此验证收到的 JWT
+          issuer-uri: localhost:9000/oauth2/jws
