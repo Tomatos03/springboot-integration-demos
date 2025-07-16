@@ -1,0 +1,12 @@
+body {
+  padding: 0;
+  margin: 0;
+  height: 100vh;
+  max-width: 100vw;
+  background-color: #ccc;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+}
