@@ -22,6 +22,7 @@
         <module>swagger3</module>
         <module>mybatis</module>
         <module>Jwt</module>
+        <module>spring-security</module>
     </modules>
 
     <properties>
