@@ -23,6 +23,7 @@
         <module>mybatis</module>
         <module>Jwt</module>
         <module>spring-security</module>
+        <module>spring-task</module>
     </modules>
 
     <properties>
