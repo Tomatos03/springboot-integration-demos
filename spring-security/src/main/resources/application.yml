@@ -1,12 +1,33 @@
 spring:
-  security:
-    # 如果使用springBoot配置类的方式也配置了默认用户那么YML配置优先级低于配置类
-    user: # 配置默认用户
-      name: "admin" # 配置默认用户的用户名, 默认值: user
-      # 配置默认用户的密码, 默认值密码由spring security随机产生并输出在控制台
-      # SpringSecurity必须配置加密方式, 如果不需要加密, 需要明确使用{noop} 占位符表示使用明文
-      password: "{noop}111"
-logging:
-  level:
-    # 配置 org.springframework.security 这个包下的类日志级别都是 trace
-    org.springframework.security: trace
+  datasource:
+    username: Tomatos
+    password: 20030503
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://localhost:3306/study_db
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+
+  application:
+    name: spring-security-name
+
+  jackson:
+    date-format: 'yyyy-MM-dd HH:mm:ss'
+    time-zone: 'GMT+8'
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      password: zjlljz
+      database: 0
+
+my-mall:
+  jwt:
+    secret: "zjldljf2434324"
+    expiration: 720000
+
+
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true

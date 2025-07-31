@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.demo.mapper.RoleMapper">
+    <select id="queryRolesByUserId" resultType="com.demo.entity.TRole">
+        SELECT tr.* FROM t_user_role tur
+            INNER JOIN t_role tr ON tur.role_id = tr.id
+            INNER JOIN t_user tu ON tur.user_id = tu.id
+        WHERE tur.user_id = #{id}
+    </select>
+</mapper>

@@ -4,24 +4,41 @@ package com.demo.controller;
  * @author : Tomatos
  * @date : 2025/7/13
  */
+
+import com.demo.entity.TUser;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.security.Principal;
 
 /**
  * @author : Tomatos
  * @date : 2025/7/13
  */
 @RestController
-@RequestMapping("demo")
 public class HelloController {
-    @RequestMapping("/index")
-    public String index(){
-        return "Hello World!";
+    @PreAuthorize("hasRole('saler')")
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello";
     }
 
-    @GetMapping("/hello")
-    public String Hello() {
-        return "Hello Spring Security";
+    @PreAuthorize("hasRole('admin')")
+    @GetMapping("/welcome")
+    public Principal welcome(Principal principal) {
+        return principal;
+    }
+
+    @GetMapping("/welcome0")
+    public Principal welcome(Authentication authentication) {
+        return authentication;
+    }
+
+    @GetMapping("/welcome1")
+    public TUser welcome() {
+        return (TUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }
