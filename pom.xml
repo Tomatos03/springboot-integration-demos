@@ -24,13 +24,32 @@
         <module>Jwt</module>
         <module>spring-security</module>
         <module>spring-task</module>
+        <module>mybatis-plus</module>
     </modules>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <mybatis-plus-starter-version>3.5.14</mybatis-plus-starter-version>
+        <mybatis-plus-jsqlparser-version>3.5.14</mybatis-plus-jsqlparser-version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus-starter-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-jsqlparser</artifactId>
+                <version>${mybatis-plus-jsqlparser-version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
 
     <dependencies>

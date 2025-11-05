@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.demo.mapper.UserMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.demo.entity.User">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="email" property="email"/>
+        <result column="age" property="age"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <!-- 自定义查询：根据用户名模糊查询 -->
+    <select id="selectByUsernameLike" resultMap="BaseResultMap">
+        SELECT id, username, email, age, create_time, update_time, deleted
+        FROM user
+        WHERE deleted = 0
+        <if test="username != null and username != ''">
+            AND username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 自定义分页查询：根据年龄范围查询 -->
+    <select id="selectPageByAgeRange" resultMap="BaseResultMap">
+        SELECT id, username, email, age, create_time, update_time, deleted
+        FROM user
+        WHERE deleted = 0
+        <if test="minAge != null">
+            AND age &gt;= #{minAge}
+        </if>
+        <if test="maxAge != null">
+            AND age &lt;= #{maxAge}
+        </if>
+        ORDER BY age ASC, create_time DESC
+    </select>
+
+    <!-- 自定义统计查询：统计指定年龄范围的用户数量 -->
+    <select id="countByAgeRange" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM user
+        WHERE deleted = 0
+        <if test="minAge != null">
+            AND age &gt;= #{minAge}
+        </if>
+        <if test="maxAge != null">
+            AND age &lt;= #{maxAge}
+        </if>
+    </select>
+
+</mapper>

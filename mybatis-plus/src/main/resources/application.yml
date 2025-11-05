@@ -1,0 +1,58 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: mybatis-plus-demo
+  
+  # 数据源配置 - H2内存数据库（用于演示）
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    
+  # 如果使用MySQL，请取消下面的注释并注释掉上面的H2配置
+  # datasource:
+  #   driver-class-name: com.mysql.cj.jdbc.Driver
+  #   url: jdbc:mysql://localhost:3306/mybatis_plus_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+  #   username: root
+  #   password: root
+  
+  # H2控制台配置（仅用于开发调试）
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  # SQL初始化配置
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+
+# MyBatis-Plus配置
+mybatis-plus:
+  # 配置Mapper XML文件位置
+  mapper-locations: classpath:mapper/*.xml
+  # 配置类型别名包
+  type-aliases-package: com.demo.entity
+  configuration:
+    # 开启驼峰命名转换
+    map-underscore-to-camel-case: true
+    # 日志实现
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      # 主键类型（AUTO-数据库自增，ASSIGN_ID-雪花算法）
+      id-type: AUTO
+      # 逻辑删除字段
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# 日志配置
+logging:
+  level:
+    com.demo.mapper: debug
