@@ -9,14 +9,16 @@ spring:
       simple:
         # 多个消费者从同一个队列中消费消息时，默认情况下会公平分配消息给消费者, 通过配置prefetch实现能者多劳
         prefetch: 1  # 每次只分配1条消息给消费者，处理完再分配下一条
-        acknowledge-mode: auto # 默认值为 none
-        # 设置重试机制, 如果重试次数超过最大尝试次数仍然失败, 会发送reject消息到Queue
+        acknowledge-mode: auto # 默认模式为auto
+        # Spring AMQP 提供的消费者本地重试机制
         retry:
           enabled: true
           max-attempts: 3         # 最大尝试次数（包括第一次），默认3
           initial-interval: 1000  # 初始重试间隔，单位毫秒，默认1000
           multiplier: 2.0         # 间隔递增倍数，默认1.0（不递增）
-          max-interval: 7000      # 最大重试间隔，单位毫秒，默认10000
+          max-interval: 5000      # 最大重试间隔，单位毫秒，默认10000
+        # 仅在没有设置retry策略时生效
+        default-requeue-rejected: false
 
 # acknowledge-mode有三种模式:
 # 1. auto: 自动确认，消息被监听方法成功消费后自动确认(由spring-amqp自动处理)，适用于大多数场景
