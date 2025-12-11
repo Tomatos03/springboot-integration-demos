@@ -1,12 +1,22 @@
 # SpringBoot 整合 RabbitMQ
 
-本项目演示了如何在 SpringBoot 中集成 RabbitMQ，包含生产者(Producer)和消费者(Consumer)两个模块，展示了 RabbitMQ 的三种常见交换机类型的配置和使用。
+Spring Boot 中提供`spring-boot-starter-amqp`包来处理`Spring Boot`和`RabbitMQ`的交互
 
-## 快速开始
+## 基本使用
 
-### 1. 安装 RabbitMQ
+> [!NOTE]
+>
+> 开始之前请确认已经安装了`RabbitMQ`
 
-确保本地已安装并启动 RabbitMQ 服务，默认端口为 5672。
+### 1. 引入依赖
+
+```xml
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-amqp</artifactId>
+   <version>[last-version]</version>
+</dependency>
+```
 
 ### 2. 配置连接信息
 
@@ -22,371 +32,362 @@ spring:
     virtual-host: "your_vhost"
 ```
 
-### 3. 启动应用
+### 3. 创建队列
 
-分别启动 Producer 和 Consumer 应用即可开始测试。
+在 `Spring Boot` 中可以通过注册 Bean 的方式创建队列。 有以下两种方式创建队列:
 
-## 基本使用
 
-这里演示如何将交换机绑定到队列, 怎么发送消息到交换机, 以及如何监听队列接收消息。
+**传统构造方法创建队列**
 
-### 绑定交换机与队列
+```java
+@Bean
+public Queue directQueue() {
+    return new Queue(
+        "direct.queue",   // 队列名称
+        true,             // 是否持久化
+        false,            // 是否排他
+        false             // 是否自动删除
+    );
+}
+```
 
-在RabbitMQ中必须生产者投递消息不能够直接投递到队列, 需要投递到交换机, 然后由交换机传递消息到队列
+**建造者模式创建队列**
+
+```java
+@Bean
+public Queue builderQueue() {
+    return QueueBuilder
+            .durable("builder.queue")           // 队列名称 & 持久化
+            .exclusive()                        // 排他队列（仅当前连接可见）
+            .autoDelete()                       // 自动删除（无消费者自动删除）
+            .withArgument("x-message-ttl", 60000) // 消息存活时间（毫秒）
+            .withArgument("x-max-length", 1000)   // 最大消息数
+            .withArgument("x-dead-letter-exchange", "dlx.exchange") // 死信交换机
+            .withArgument("x-dead-letter-routing-key", "dlx.key")   // 死信路由键
+            .build();
+}
+```
+
+### 4. 创建交换机
+
+在 `Spring Boot` 中可以通过注册 Bean 的方式创建交换机。RabbitMQ 支持多种交换机类型，常见的有 Direct、Fanout和Topic。下面是各类型交换机的说明：
+
+| 交换机类型         | 说明                                                         | 代码示例 Bean 类型         |
+|------------------|------------------------------------------------------------|---------------------------|
+| **Direct**       | 直连交换机，按路由键精确匹配队列                             | `DirectExchange`          |
+| **Fanout**       | 扇形交换机，消息广播到所有绑定队列                           | `FanoutExchange`          |
+| **Topic**        | 主题交换机，支持通配符路由键                                 | `TopicExchange`           |
+
+**Direct 交换机：**
+
+```java
+@Bean
+public DirectExchange directExchange() {
+    return new DirectExchange(
+        "rabbitmq.direct",   // 交换机名称
+        true,                // 是否持久化
+        false                // 是否自动删除
+    );
+}
+```
+
+**Fanout 交换机：**
+```java
+@Bean
+public FanoutExchange fanoutExchange() {
+    return new FanoutExchange(
+        "rabbitmq.fanout", 
+        true, 
+        false
+    );
+}
+```
+
+**Topic 交换机：**
+```java
+@Bean
+public TopicExchange topicExchange() {
+    return new TopicExchange(
+        "rabbitmq.topic", 
+        true, 
+        false
+    );
+}
+```
+
+### 5. 绑定队列和交换机
+
+创建好队列和交换机后，需要将它们进行绑定。绑定的作用是指定消息从交换机路由到哪个队列。可以通过注册 `Binding` 类型的 Bean 来实现绑定。
+
+常见交换机以其绑定方式如下：
+
+| 交换机类型         | 绑定方式说明                                   |
+|------------------|----------------------------------------------|
+| **Direct 交换机** | 需要指定路由键（routingKey）                    |
+| **Fanout 交换机** | 不需要指定路由键，所有绑定的队列都会收到消息      |
+| **Topic 交换机**  | 需要指定支持通配符的路由键                       |
+
+> [!TIP]
+> 下面的绑定示例假设已经创建了相应的队列和交换机 Bean。
+
+**Fanout 交换机的绑定**
+
+```java
+@Bean
+public Binding bindingFanout(Queue fanoutQueue, FanoutExchange fanoutExchange) {
+    return BindingBuilder.bind(fanoutQueue)
+                         .to(fanoutExchange);
+}
+```
+
+**Direct 交换机的绑定**
+
+```java
+@Bean
+public Binding bindingDirect(Queue directQueue, DirectExchange directExchange) {
+    return BindingBuilder.bind(directQueue)
+                         .to(directExchange)
+                         .with("blue"); // 指定路由键
+}
+```
+
+**Topic 交换机的绑定**
+
+```java
+@Bean
+public Binding bindingTopic(Queue topicQueue, TopicExchange topicExchange) {
+    return BindingBuilder.bind(topicQueue)
+                         .to(topicExchange)
+                         .with("china.#"); // 支持通配符
+}
+```
+
+### 6. 创建消费者
+
+在 Spring Boot 中，RabbitMQ 消费者的实现方式主要有以下几种
+
+- **`@RabbitListener` 注解**
+
+```java
+@Component
+public class RabbitConsumer {
+
+    // 监听队列名为 direct.queue 队列
+    @RabbitListener(queues = "direct.queue")
+    public void receiveDirectQueue(String message) {
+        log.info("收到 direct.queue 消息: {}", message);
+    }
+
+    // 监听队列名为 fanout.queue 队列
+    @RabbitListener(queues = "fanout.queue")
+    public void receiveFanoutQueue(String message) {
+        log.info("收到 fanout.queue 消息: {}", message);
+    }
+}
+```
+
+- **`@RabbitHandler` + `@RabbitListener`注解**
+
+适用于同一个队列需要根据消息类型分发到不同方法处理的场景。
+
+```java
+@Component
+@RabbitListener(queues = "multi.queue")
+public class MultiTypeConsumer {
+
+    @RabbitHandler
+    public void receiveString(String message) {
+        log.info("multi.queue 收到字符串消息: {}", message);
+    }
+
+    @RabbitHandler
+    public void receiveOrder(Order order) {
+        log.info("multi.queue 收到订单消息: {}", order);
+    }
+}
+```
+
+`@RabbitListener`注解属性参考表:
+
+| 参数名称                | 参数作用                                                                                                   |
+|------------------------|------------------------------------------------------------------------------------------------------------|
+| queues                 | 指定要监听的队列名称（支持多个队列）                                                                       |
+| queueNames             | 与 queues 类似，指定队列名称（推荐使用 queues）                                                            |
+| bindings               | 通过 @QueueBinding 注解方式绑定队列和交换机                                                                |
+| containerFactory       | 指定使用的消息监听容器工厂（默认 simpleRabbitListenerContainerFactory）                                    |
+| concurrency            | 设置并发消费者数量，提升消费能力                                                                           |
+| acknowledgeMode        | 消息消费后的确认机制（auto：自动确认，manual：手动确认，none：不确认）                                     |
+| autoStartup            | 是否自动启动监听器（默认 true）                                                                            |
+| exclusive              | 是否独占队列（仅当前消费者可消费）                                                                         |
+| id                     | 指定监听器的唯一标识符                                                                                    |
+| errorHandler           | 指定异常处理器 Bean 名称                                                                                   |
+| messageConverter       | 指定消息转换器 Bean 名称                                                                                   |
+| replyTimeout           | 指定回复超时时间（用于 RPC 场景）                                                                          |
+| returnExceptions       | 是否将异常返回给发送方（用于 RPC 场景）                                                                    |
+| priority               | 设置消费者优先级                                                                                          |
+| retryEnabled           | 是否开启消费失败自动重试                                                                                   |
+| prefetch               | 每次预取消息数量，控制每个消费者一次拉取的消息数，避免消息堆积                                             |
+| batch                  | 是否批量消费消息（默认 false）                                                                            |
+| consumerTagPrefix      | 设置消费者标签前缀                                                                                        |
+| arguments              | 额外参数（Map 类型），用于声明队列、交换机等时传递自定义参数                                               |
+| deBatchingEnabled      | 是否开启批量消息拆分（默认 true）                                                                         |
+| missingQueuesFatal     | 队列不存在时是否抛出异常（默认 true）                                                                     |
+| noLocal                | 是否只消费本地消息（默认 false）                                                                          |
+| consumerArguments      | 消费者参数（Map 类型），用于设置消费者属性                                                                 |
+| ackMode                | 消息确认模式（auto/manual/none，等同于 acknowledgeMode）                                                  |
+
+**使用示例：**
+
+```java
+@RabbitListener(
+    queues = {"direct.queue", "fanout.queue"},
+    concurrency = "3",
+    acknowledgeMode = "manual",
+    autoStartup = "true",
+    id = "myListener",
+    containerFactory = "myRabbitListenerContainerFactory",
+    errorHandler = "myErrorHandler",
+    messageConverter = "myMessageConverter",
+    prefetch = "5"
+)
+public void handleMessage(String message) {
+    log.info("收到消息: {}", message);
+    // 手动确认逻辑...
+}
+```
+
+### 7. 消息发送
+
+Spring AMQP 提供了 `RabbitTemplate` 作为消息发送的核心组件。你可以通过它将消息发送到指定的交换机和队列，支持多种消息体类型（字符串、对象、Map等），并可灵活设置路由键、消息属性等。
+
+
+**发送消息的基本方法**
+
+- **convertAndSend(exchange: String, routingKey: String, message: Object)**  
+  发送消息到指定交换机和路由键，`message`参数可以是字符串、对象、Map等类型，方法会自动将消息体序列化为字节流。
+
+- **send(exchange: String, routingKey: String, message: Message)**  
+  发送自定义 `Message` 类型对象，可以手动设置消息属性（如内容类型、消息头等），适用于需要精细控制消息元数据的场景。
+
+```java
+@Autowired
+private RabbitTemplate rabbitTemplate;
+
+public void sendMessages() {
+    // Direct Exchange 发送字符串消息
+    rabbitTemplate.convertAndSend("rabbitmq.direct", "blue", "Hello Direct Exchange!");
+
+    // Direct Exchange 发送对象消息（自动序列化为JSON）
+    Order order = new Order("1001", "手机", 1);
+    rabbitTemplate.convertAndSend("rabbitmq.direct", "order", order);
+
+    // Fanout Exchange 发送消息（不需要路由键）
+    rabbitTemplate.convertAndSend("rabbitmq.fanout", "", "Hello Fanout Exchange!");
+
+    // Topic Exchange 发送消息（路由键支持通配符）
+    rabbitTemplate.convertAndSend("rabbitmq.topic", "china.#", "中国所有新闻");
+    rabbitTemplate.convertAndSend("rabbitmq.topic", "*.news", "任意国家新闻");
+    rabbitTemplate.convertAndSend("rabbitmq.topic", "china.*.sports", "中国各地体育新闻");
+
+    // 发送带属性的消息
+    MessageProperties props = new MessageProperties();
+    props.setContentType(MessageProperties.CONTENT_TYPE_TEXT_PLAIN);
+    props.setHeader("myHeader", "headerValue");
+    Message message = new Message("消息带属性".getBytes(StandardCharsets.UTF_8), props);
+
+    rabbitTemplate.send("rabbitmq.direct", "blue", message);
+}
+```
+
+#### 自定义序列化器
+
+默认情况下，`RabbitTemplate` 会使用 Jackson 将对象序列化为 JSON 格式发送。你可以通过注册 `MessageConverter` 实现类为`Bean`自定义序列化方式。
+
+```java
+@Bean
+public MessageConverter messageConverter() {
+    return new Jackson2JsonMessageConverter();
+}
+```
 
 > [!NOTE]
->
-> RabbitMQ中一个名为""的默认交换机默认绑定所有已经存在的队列, routingKey 为队列名. 使用这个默认交换机能够间接实现直接投递消息到队列的效果
+> 使用`convertAndSend`方法发送的消息才会使用序列化器序列化
 
-#### 配置类方式
+#### 延迟消息
+
+**延迟消息**是指交换机中的消息在指定时间过后才投递消息到队列中. 通过以下步骤使用延迟消息这个特性:
+
+> [!TIP]
+> 在**RabbitMq**中并没有原生支持延迟消息功能，需要额外安装 [延迟消息插件](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange)提供支持
+
+> [!NOTE]
+> 只有**延迟交换机**才能能够处理带有延迟标记的消息
+
+1. 创建延迟交换机
+
+**通过构造器创建**
 
 ```java
-@Configuration
-public class RabbitMQConfig {
-
-    // ==================== Direct Exchange 配置 ====================
-
-    /*
-     * durable = true
-     * 队列配置后：RabbitMQ 服务重启后，队列/交换机依然存在，消息不会丢失（前提是消息本身也设置为持久化）。
-     * 交换机配置后: RabbitMQ 服务重启后，队列/交换机会被删除，消息也会丢失。
-     *
-     * autoDelete = true
-     * 队列配置后: 最后一个消费者断开连接后，队列自动删除
-     * 交换机配置后:没有队列绑定时，交换机自动删除
-     */
-    @Bean
-    public DirectExchange directExchange() {
-        // 交换机和队列还提供了Builder模式进行配置
-        return new DirectExchange(
-            "rabbitmq.direct",    // 交换机名称
-            true,                 // 是否持久化
-            false                 // 是否自动删除
-        );
-    }
-
-    @Bean
-    public Queue directQueue() {
-        return new Queue(
-            "direct.queue",      // 队列名称
-            true                 // 是否持久化
-        );
-    }
-
-    @Bean
-    public Binding bindingDirect1(Queue directQueue, DirectExchange directExchange) {
-        return BindingBuilder.bind(directQueue)    // 绑定队列
-                           .to(directExchange)       // 到交换机
-                           .with("blue");            // 使用路由键 "blue"
-    }
-
-    // ==================== Fanout Exchange 配置 ====================
-
-    @Bean
-    public FanoutExchange fanoutExchange() {
-        return new FanoutExchange(
-            "rabbitmq.fanout",    // 交换机名称
-            true,                 // 是否持久化
-            false                 // 是否自动删除
-        );
-    }
-
-    @Bean
-    public Queue fanoutQueue1() {
-        return new Queue("fanout.queue", true);
-    }
-
-    @Bean
-    public Binding bindingFanout1(Queue fanoutQueue1, FanoutExchange fanoutExchange) {
-        return BindingBuilder.bind(fanoutQueue1)    // 绑定队列
-                             .to(fanoutExchange);   // 到广播交换机（无需路由键, 如果配置了也不影响）
-    }
-
-    // ==================== Topic Exchange 配置 ====================
-
-    @Bean
-    public TopicExchange topicExchange() {
-        return new TopicExchange(
-            "rabbitmq.topic",     // 交换机名称
-            true,                 // 是否持久化
-            false                 // 是否自动删除
-        );
-    }
-
-    @Bean
-    public Queue topicQueue1() {
-        return new Queue("topic.queue1", true);
-    }
-
-    @Bean
-    public Queue topicQueue2() {
-        return new Queue("topic.queue2", true);
-    }
-
-    @Bean
-    public Binding bindingTopic1(Queue topicQueue1, TopicExchange topicExchange) {
-        return BindingBuilder.bind(topicQueue1)
-                           .to(topicExchange)
-                           .with("china.#");         // # 匹配零个或多个单词
-    }
-
-    @Bean
-    public Binding bindingTopic2(Queue topicQueue2, TopicExchange topicExchange) {
-        return BindingBuilder.bind(topicQueue2)
-                           .to(topicExchange)
-                           .with("*.news");          // * 匹配一个单词
-    }
+@Bean
+public CustomExchange delayedExchange() {
+    Map<String, Object> args = new HashMap<>();
+    args.put("x-delayed-type", "direct"); // 指定实际交换机类型
+    return new CustomExchange(
+        "rabbitmq.delayed",                // 交换机名称
+        "x-delayed-message",               // 交换机类型，启用延迟功能
+        true,                              // 是否持久化
+        false,                             // 是否自动删除
+        args                               // 交换机参数
+    );
 }
 ```
 
-#### 注解配置方式
-
-这种方式不仅仅绑定交换机到队列, 还设置了监听的队列
+**通过建造者模式创建**
 
 ```java
-@Component
-public class MessageConsumer {
-
-    // ==================== Direct Exchange 消费者 ====================
-
-    // 监听的队列和交换机不存在时, 按照声明的规则自动创建
-    @RabbitListener(
-        bindings = @QueueBinding(
-            value = @Queue(
-                value = "direct.queue",          // 队列名称
-                durable = "true"                  // 是否持久化
-            ),
-            exchange = @Exchange(
-                value = "rabbitmq.direct",        // 交换机名称
-                type = ExchangeTypes.DIRECT,      // 交换机类型
-                durable = "true"                  // 是否持久化
-            ),
-            key = "blue"                          // 路由键
-        )
-    )
-    public void receiveDirectMessage1(String message) {
-        System.out.println("Direct Queue received: " + message);
-    }
-
-    // ==================== Fanout Exchange 消费者 ====================
-
-    @RabbitListener(
-        bindings = @QueueBinding(
-            value = @Queue(
-                value = "fanout.queue",
-                durable = "true"
-            ),
-            exchange = @Exchange(
-                value = "rabbitmq.fanout",
-                type = ExchangeTypes.FANOUT       // 广播类型交换机
-            )
-            // 广播交换机无需指定路由键
-        )
-    )
-    public void receiveFanoutMessage1(String message) {
-        System.out.println("Fanout Queue1 received: " + message);
-    }
-    // ==================== Topic Exchange 消费者 ====================
-
-    @RabbitListener(
-        bindings = @QueueBinding(
-            value = @Queue(value = "topic.queue1", durable = "true"),
-            exchange = @Exchange(
-                value = "rabbitmq.topic",
-                type = ExchangeTypes.TOPIC        // 主题类型交换机
-            ),
-            key = "china.#"                       // 匹配 china.* 模式的路由键
-        )
-    )
-    public void receiveTopicMessage1(String message) {
-        System.out.println("Topic Queue1 received: " + message);
-    }
-
-    @RabbitListener(
-        bindings = @QueueBinding(
-            value = @Queue(value = "topic.queue2", durable = "true"),
-            exchange = @Exchange(value = "rabbitmq.topic", type = ExchangeTypes.TOPIC),
-            key = "*.news"                        // 匹配 *.news 模式的路由键
-        )
-    )
-    public void receiveTopicMessage2(String message) {
-        System.out.println("Topic Queue2 received: " + message);
-    }
+@Bean
+public Exchange delayedExchange() {
+    return ExchangeBuilder.directExchange("delayed_exchange")
+                          .delayed()
+                          .durable(true)
+                          .build();
 }
 ```
 
-### 消息发送
-
-在测试类中演示如何向三种不同的交换机发送消息：
+2. 发送延迟消息
 
 ```java
-@SpringBootTest
-public class RabbitProducerTest {
-
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
-
-    // ==================== Direct Exchange 发送消息 ====================
-
-    @Test
-    public void testSendMessageToDirectExchange() {
-        String exchangeName = "rabbitmq.direct";
-        String message = "Hello Direct Exchange!";
-
-        // 发送给 blue 路由键，只有 direct.queue1 会收到
-        rabbitTemplate.convertAndSend(
-            exchangeName,                         // 交换机名称
-            "blue",                              // 路由键（必须精确匹配）
-            message                              // 消息内容
-        );
-
-        // 发送给 red 路由键，只有 direct.queue2 会收到
-        rabbitTemplate.convertAndSend(exchangeName, "red", "Red message");
-    }
-
-    // ==================== Fanout Exchange 发送消息 ====================
-
-    @Test
-    public void testSendMessageToFanoutExchange() {
-        String exchangeName = "rabbitmq.fanout";
-        String message = "Hello Fanout Exchange!";
-
-        rabbitTemplate.convertAndSend(
-            exchangeName,                         // 交换机名称
-            "",                                  // 路由键（广播模式可为空）
-            message                              // 消息内容
-        );
-        // 消息会发送到所有绑定该交换机的队列
-    }
-
-    // ==================== Topic Exchange 发送消息 ====================
-
-    @Test
-    public void testSendMessageToTopicExchange() {
-        String exchangeName = "rabbitmq.topic";
-
-        // 发送到 china.news，匹配 "china.#" 和 "*.news" 两个模式
-        rabbitTemplate.convertAndSend(
-            exchangeName,
-            "china.news",                        // 路由键
-            "China news message"
-        );
-
-        // 发送到 china.sports，只匹配 "china.#" 模式
-        rabbitTemplate.convertAndSend(exchangeName, "china.sports", "China sports message");
-
-        // 发送到 usa.news，只匹配 "*.news" 模式
-        rabbitTemplate.convertAndSend(exchangeName, "usa.news", "USA news message");
-    }
-}
-```
-### 消息监听
-
-在消费者模块中，可以通过 `@RabbitListener` 注解实现对队列的消息监听。当有新消息到达队列时，监听方法会自动被调用，处理收到的消息。
-
-```java
-@Component
-public class RabbitMQListener {
-
-    // 监听 Direct 队列
-    @RabbitListener(queues = "direct.queue")
-    public void listenDirectQueue(String message) {
-        System.out.println("收到 Direct 队列消息: " + message);
-    }
-
-    // 监听 Fanout 队列
-    @RabbitListener(queues = "fanout.queue")
-    public void listenFanoutQueue(String message) {
-        System.out.println("收到 Fanout 队列消息: " + message);
-    }
-
-    // 监听 Topic 队列1
-    @RabbitListener(queues = "topic.queue1")
-    public void listenTopicQueue1(String message) {
-        System.out.println("收到 Topic 队列1消息: " + message);
-    }
-
-    // 监听 Topic 队列2
-    @RabbitListener(queues = "topic.queue2")
-    public void listenTopicQueue2(String message) {
-        System.out.println("收到 Topic 队列2消息: " + message);
-    }
-}
+rabbitTemplate.convertAndSend("rabbitmq.delayed", "delayed.key", "延迟消息", message -> {
+    message.getMessageProperties().setDelay(5000); // 延迟5秒
+    return message;
+});
 ```
 
+## 通配符规则
 
-## 交换机类型详解
-
-RabbitMQ 提供了四种交换机类型，本Demo演示其中最常用的三种：Direct（直连）、Fanout（广播）、Topic（主题）交换机如何配置和使用
-
-### 交换机特点对比
-
-| 交换机类型 | 路由方式 | 使用场景 |
-|----------|---------|---------|
-| **Direct** | 精确匹配路由键 | 点对点消息传递，需要精确路由 |
-| **Fanout** | 忽略路由键，广播到所有绑定队列 | 广播通知，消息需要发送给所有订阅者 |
-| **Topic** | 通配符模式匹配路由键 | 复杂的消息分发规则，支持模糊匹配 |
-
-### Topic Exchange 通配符规则
+主题交换机支持根据通配符路由,  通配符规则如下:
 
 - `*` (星号)：匹配**一个**单词
 - `#` (井号)：匹配**零个或多个**单词
 
-**示例说明：**
+**示例：**
+
 - `china.#` 可以匹配：`china.news`、`china.sports`、`china.tech.ai` 等
 - `*.news` 可以匹配：`china.news`、`usa.news`、`uk.news` 等
 - `china.*.sports` 可以匹配：`china.beijing.sports`、`china.shanghai.sports` 等
 
-## 高级特性
+## 消息可靠性
 
-### 延迟消息
+`Spring AMQP`提供了一些配置选项来提高消息可靠性
 
-**延迟消息**: 交换机在指定时间后投递消息到消息队列中, 在**RabbitMq**中并没有原生支持延迟消息功能，需要额外安装 [RabbitMQ 延迟消息插件](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange)。
-
-#### 配置延迟交换机
-
-```java
-@RabbitListener(
-    bindings = @QueueBinding(
-        value = @Queue(value = "delayed.queue", durable = "true"),
-        exchange = @Exchange(
-            value = "rabbitmq.delayed",
-            delayed = "true"                      // 启用延迟功能
-        ),
-        key = "delayed.key"
-    )
-)
-public void receiveDelayedMessage(String message) {
-    log.info("Received delayed message: {}", message);
-}
-```
-
-#### 发送延迟消息
-
-```java
-@Test
-public void testDelaySendMessage() {
-    String exchangeName = "rabbitmq.delayed";
-    String routeKey = "delayed.key";
-
-    // convertAndSend(exchangeName, routeKey, message, messagePostProcessor)
-    rabbitTemplate.convertAndSend(exchangeName, routeKey, "delayed message", message -> {
-        message.getMessageProperties().setDelay(10000);  // 延迟10秒(单位毫秒)
-        return message;
-    });
-}
-```
-
-### 消息可靠性保证
-
-#### 生产者配置
+### 生产者配置
 
 ```yaml
 spring:
   rabbitmq:
-    publisher-confirm-type: correlated          # 开启发布确认（异步回调）
-	publisher-returns: true                     # 开启消息返回机制
-    template:
+  publisher-confirm-type: correlated          # 开启发布确认（异步回调）
+  publisher-returns: true                     # 开启消息返回机制
+  template:
       mandatory: true
       retry:
         enabled: true                           # 开启重试
@@ -396,26 +397,18 @@ spring:
         max-interval: 10000                     # 最大重试间隔(ms)
 ```
 
-##### publisher-returns
+#### publisher-returns
 
 当属性值设置为`true`时, 如果消息投递到交换机成功, 但是没有匹配到任何队列, 则会触发**消息返回回调**。
 
-##### publisher-confirm-type
+#### publisher-confirm-type
 
 当前属性设置为非`none`值时, 可为消息配置`confirm`回调, `confirm`回调**在消息成功到达 RabbitMQ Broker 后才会触发(无论是 ack 还是 nack)**
 
-**ack: **消息成功交由指定的交换机并持久化(如果开启了持久化)
+- **ack:** 消息成功交由指定的交换机并持久化(如果开启了持久化)
+- **nack:** 消息被拒绝
 
-**nack: ** 
-
-+ 消息指定的交换机不存在
-+ 交换机配置错误或权限不足
-+ Broker 内部错误(如磁盘满、内存溢出)
-+ 消息被强制拒绝
-
-> [!NOTE]
->
-> 消息到达RabbiMQ Broker不意味着一定有被路由
+可选值参考表:
 
 | 可选值         | 说明                                                         |
 |---------------|--------------------------------------------------------------|
@@ -423,7 +416,17 @@ spring:
 | **correlated**| 启用异步发布确认，发送消息后通过回调接口异步接收确认结果。    |
 | **simple**    | 启用同步发布确认，发送消息后会阻塞等待RabbitMQ返回确认结果。  |
 
-###### 单条消息设置confirm回调
+> [!NOTE]
+>
+> 以下情况消息到达队列后会发生nack:
+> + 消息指定的交换机不存在
+> + 交换机配置错误或权限不足
+> + Broker 内部错误(如磁盘满、内存溢出)
+> + 消息被强制拒绝
+
+##### 单条消息配置回调
+
+仅对当前发送的消息生效
 
 ```java
 public void addCouponToQueue(Long voucherId) {
@@ -457,15 +460,53 @@ private void handleAddVoucherToQueueSuccess(CorrelationData.Confirm ok) {
 }
 ```
 
-#### 消费者配置
+##### 全局消息回调
+
+对每一条发送的消息都生效
+
+```java
+@Configuration
+public class RabbitConfig {
+
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+
+        // 消息发送到交换机确认回调
+        rabbitTemplate.setConfirmCallback(new RabbitTemplate.ConfirmCallback() {
+            @Override
+            public void confirm(CorrelationData correlationData, boolean ack, String cause) {
+                if (ack) {
+                    System.out.println("消息成功到达交换机，correlationData: " + correlationData);
+                } else {
+                    System.out.println("消息未到达交换机，原因: " + cause);
+                }
+            }
+        });
+
+        // 消息从交换机路由到队列失败回调
+        rabbitTemplate.setReturnCallback(new RabbitTemplate.ReturnCallback() {
+            @Override
+            public void returnedMessage(Message message, int replyCode, String replyText,
+                                       String exchange, String routingKey) {
+                System.out.println("消息未路由到队列，exchange: " + exchange + ", routingKey: " + routingKey);
+            }
+        });
+
+        return rabbitTemplate;
+    }
+}
+```
+
+### 消费者配置
 
 ```yaml
 spring:
   rabbitmq:
     listener:
       simple:
-      	# 消息没有被成功消息(抛异常或nack)时, 使用默认的拒绝策略重入队
-      	# 仅在没有设置retry时生效, 默认值为true(当抛出异常时会无限重试)
+       # 消息没有被成功消息(抛异常或nack)时, 使用默认的拒绝策略重入队
+       # 仅在没有设置retry时生效, 默认值为true(当抛出异常时会无限重试)
         default-requeue-rejected: false 		
         acknowledge-mode: auto                  # 消息确认模式（auto/manual/none）
         prefetch: 1								# 每次预取消息数量
@@ -477,9 +518,11 @@ spring:
           multiplier: 2.0                       # 重试间隔倍数
           max-interval: 10000                   # 最大重试间隔(ms)
 ```
-##### acknowledge-mode
+#### acknowledge-mode
 
-`acknowledge-mode` 用于控制消息消费后的确认机制，常用参数如下：
+`acknowledge-mode` 用于控制消息消费后的确认机制.
+
+可选值参考表:
 
 | 参数值      | 说明                                                         | 适用场景           |
 |-------------|--------------------------------------------------------------|--------------------|
@@ -487,36 +530,17 @@ spring:
 | **manual**  | 手动确认。需要在代码中显式调用 `channel.basicAck` 或 `channel.basicNack` 方法进行消息确认或拒绝。 | 业务复杂、需精细控制消息处理结果时 |
 | **none**    | 不确认。RabbitMQ 不会等待任何确认，消息一旦投递即认为已消费。 | 性能优先但有丢失风险 |
 
-- **auto**：Spring AMQP 默认模式，监听方法无异常即自动确认消息，异常时自动拒绝并可重试。
-- **manual**：需在监听方法参数中加入 `Channel` 和 `Message`，通过代码手动确认或拒绝消息，适合需要幂等性、事务等复杂业务场景。
-- **none**：不推荐生产环境使用，消息可能丢失，适合对可靠性要求极低的场景。
-
 > [!NOTE]
-> 在SpringBoot 之中，默认使用 `auto` 模式，当监听方法执行成功时，消息会被自动确认；如果监听方法抛出异常，消息会被拒绝并根据配置进行重试或丢弃。
+> 在SpringBoot 之中，默认使用 `auto` 模式，当监听方法执行完成时，消息会被自动确认；如果监听方法抛出异常，消息会被拒绝并根据配置进行重试或丢弃。
 
-##### retry
+#### retry
 
 默认值为`false`, 设置为`true`时, 消费者处理消息出现异常时, 不断的进行重试, 直到重试次数达到`max-attempts`. 到达最大重试次数后创建一个名为`error.excahnge`的交换机, 并通过路由健`error.msg`绑定到队列`error.queue`. 然后将错误信息投递到`error.exchange`交换机, 路由到`error.queue`
 
-##### default-requeue-rejected
+#### default-requeue-rejected
 
 默认值为`true`, 当消费者处理消息出现异常时, 是否重新入队. 如果异常一直存在, 在其值设置为`true`时, 会无限重试造成cpu空转
 
 > [!note]
 >
 > 仅在retry的enable值为`false`时生效
-
-## 注意事项
-
-1. **性能考虑**：发布确认机制会影响性能，非必要情况下不建议开启
-2. **延迟消息**：需要安装对应的 RabbitMQ 插件才能使用
-3. **消息持久化**：生产环境建议开启队列和消息的持久化
-4. **异常处理**：实现适当的异常处理和重试机制
-5. **轮询分发**：存在多个消费者的时候, 每条消息只会被一个消费者消费, 消费分发采用轮询的方式
-6. **资源管理**：及时释放连接和通道资源
-
-## 参考资料
-
-- [RabbitMQ 官方文档](https://www.rabbitmq.com/documentation.html)
-- [Spring AMQP 文档](https://docs.spring.io/spring-amqp/reference/html/)
-- [RabbitMQ 延迟消息插件](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange)
