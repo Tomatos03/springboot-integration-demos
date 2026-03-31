@@ -1,33 +1,150 @@
-# 基于Jwt实现的鉴权登录
-## 基本流程
-1. 发送请求到服务端, 
-   + 如果没有携带token, 重定向到鉴权页面
-   + 如果携带token, 尝试解析token, 解析成功放行, 解析失败重定向到鉴权页面
-2. 在鉴权页面成功通过认证, 服务端生成Jwt(字符串)返回给客户端
-3. 客户端存储服务端下发的Jwt, 存储在Cookie或者其他位置
+# Jwt
 
-## Maven依赖
+## Jwt结构
 
-依赖说明或使用说明查看[jjwt](https://github.com/jwtk/jjwt)
+JWT 由Header、Payload、Signature三部分组成， 基本结构如下：
+
+```bash
+# Jwt结构
+header.payload.signature
+
+# 演示Jwt
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
+```
+
+### Header
+
+Header常见内容如下： 
+
+```json
+// json
+{
+  "alg": "HS256",   // 签名算法（如 HMAC SHA256）
+  "typ": "JWT"      // Token 类型
+}
+```
+
+在生成Jwt的过程中会将这个部分的内容(Json)进行Base64Url编码
+
+### Playload
+
+Playload常见内容：
+
+```json
+// 这些属性并不是强制的， 仅仅作为标准规范参考
+{
+  "iss": "auth.example.com",      // 签发者（Issuer）：谁签发了这个 JWT，一般是认证服务器的标识
+  "sub": "1234567890",            // 主题（Subject）：这个 JWT 针对的用户或实体的唯一标识
+  "aud": "my-app",                // 受众（Audience）：这个 JWT 的接收方，通常是你的应用系统标识
+  "exp": 1718000000,              // 过期时间（Expiration Time）：JWT 的失效时间（Unix 时间戳，单位秒）
+  "nbf": 1717990000,              // 生效时间（Not Before）：JWT 在此时间之前无效（Unix 时间戳，单位秒）
+  "iat": 1717990000,              // 签发时间（Issued At）：JWT 的签发时间（Unix 时间戳，单位秒）
+  "jti": "abc123"                 // JWT ID（JWT ID）：JWT 的唯一标识，用于防止重放攻击
+}
+```
+
+在生成Jwt的过程中会将这个部分的内容(Json)进行Base64Url编码
+
+### Signature
+
+这个部分并不存储实际的内容，生成过程如下：
+
+1. 拼接 Header 和 Payload 的编码结果：
+
+```json
+  concatenateStr =  base64UrlEncode(header) + "." + base64UrlEncode(payload)
+```
+
+2. 利用秘钥(字符串)和指定的算法进行签名：
+```json
+   signature = HMACSHA256(concatenateStr, secret)
+```
+
+3. 进行Base64Url编码
+
+
+> [!WARNING]
+>  1. Playload和Header是明文，Signature是密文
+>  2. Jwt不具备保密性（不要将敏感信息存储到Payload），仅能够保证信息没有被篡改和发送者身份真实性
+
+
+## 工作流程
+
+Jwt的工作流程包含两个部分：
+
+1. Token的颁发：
+
+   ![JWT Token颁发流程](./assets/jwt-issue-flow.svg)
+
+2. 受保护资源的访问:
+
+   ![JWT 受保护资源访问流程](./assets/jwt-access-flow.svg)
+
+
+## 扩展JWT方案
+
+### 双Token方案
+
+颁发Token时颁发两个Token： RfreshToken和AccessToken, 其中AccessToken的过期时间较短，RefreshToken的过期时间较长. AccessToken用于访问受保护资源， RefreshToken用于刷新AccessToken.
+
+![Jwt 双Token方案](./assets/jwt-double-token-flow.svg)
+
+## SpringBoot集成Jwt
+
+### Maven依赖
+
+推荐使用统一版本变量，避免 `jjwt-api / jjwt-impl / jjwt-jackson` 版本不一致。
+
+依赖说明与更多用法可查看 [jjwt 官方仓库](https://github.com/jwtk/jjwt)。
 
 ```xml
+<properties>
+    <jjwt.version>0.12.6</jjwt.version>
+</properties>
+
 <dependency>
     <groupId>io.jsonwebtoken</groupId>
     <artifactId>jjwt-api</artifactId>
-    <version>0.12.6</version>
+    <version>${jjwt.version}</version>
 </dependency>
 
 <dependency>
     <groupId>io.jsonwebtoken</groupId>
     <artifactId>jjwt-impl</artifactId>
-    <version>0.12.6</version>
+    <version>${jjwt.version}</version>
     <scope>runtime</scope>
 </dependency>
 
 <dependency>
     <groupId>io.jsonwebtoken</groupId>
-    <artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
-    <version>0.12.6</version>
+    <artifactId>jjwt-jackson</artifactId> <!-- 如果项目用 Gson，可替换为 jjwt-gson -->
+    <version>${jjwt.version}</version>
     <scope>runtime</scope>
 </dependency>
+```
+
+依赖作用说明：
+
+- `jjwt-api`：对外 API（编译期需要）。
+- `jjwt-impl`：核心实现（运行期需要）。
+- `jjwt-jackson`：基于 Jackson 的 JSON 序列化支持（运行期需要）。
+
+### 核心类实现（TokenManager）
+
+具体实现可参考：`Jwt/src/main/java/org/demo/manager/jwt/TokenManager.java`
+
+该类是 JWT 的统一入口，主要提供 3 个方法：
+
+- `generatorToken(Map<String, Object> payload)`：生成 Token，内部调用 `JwtUtil.createJws(...)`，并使用 `TokenProperties` 中的 `secret` 与 `expirationSeconds`。
+- `validateToken(String token)`：校验 Token 是否有效，内部通过 `parseToken(token)` 完成校验，捕获异常后返回 `false`。
+- `parseToken(String token)`：解析并返回 `Claims`，用于读取 `userId` 等业务字段。
+
+相关配置类：`Jwt/src/main/java/org/demo/manager/jwt/TokenProperties.java`
+
+```yaml
+# application.yml
+jwt:
+  token:
+    secret: your-base64-secret
+    expiration-seconds: 86400
 ```

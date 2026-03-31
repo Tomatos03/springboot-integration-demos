@@ -1,0 +1,4 @@
+jwt:
+  token:
+    secret: aYyXSHX2tcBhZFNH6H9XAAXpk7tZAQmLtwserrmRk98=
+    expiration-seconds: 86400
