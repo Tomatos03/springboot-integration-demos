@@ -1,14 +1,20 @@
-# SpringBoot 整合 RabbitMQ
+# RabbitMQ
 
 Spring Boot 中提供`spring-boot-starter-amqp`包来处理`Spring Boot`和`RabbitMQ`的交互
 
-## 基本使用
+## RabbitMQ基本架构
+
+![RabbitMQ基本架构](assets/rabbitmq-architecture.svg)
+
+## 集成到SpringBoot
 
 > [!NOTE]
 >
-> 开始之前请确认已经安装了`RabbitMQ`
+> 开始之前请确认已经安装了`RabbitMQ`, 并启动了`RabbitMQ`服务
 
-### 1. 引入依赖
+### 项目初始化
+
+#### 引入Maven依赖
 
 ```xml
 <dependency>
@@ -18,26 +24,35 @@ Spring Boot 中提供`spring-boot-starter-amqp`包来处理`Spring Boot`和`Rabb
 </dependency>
 ```
 
-### 2. 配置连接信息
+> [!TIP]
+> Maven中央仓库地址：[spring-boot-starter-amqp](https://central.sonatype.com/artifact/org.springframework.boot/spring-boot-starter-amqp/versions)
+
+#### 配置连接信息
 
 在 `application.yml` 中配置 RabbitMQ 连接信息：
 
 ```yaml
+# application.yml
 spring:
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: your_username
-    password: your_password
-    virtual-host: "your_vhost"
+    host: localhost                # RabbitMQ 服务器地址
+    port: 5672                     # RabbitMQ 端口号，默认5672
+    username: your_username        # 登录用户名
+    password: your_password        # 登录密码
+    virtual-host: "your_vhost"     # 虚拟主机名称，默认为"/"
 ```
 
-### 3. 创建队列
+
+### 声明基础设施
+
+通过 `@Bean` 声明队列、交换机及绑定关系，Spring Boot 会在应用启动时自动在 Broker 上创建这些资源（如果不存在）。
+
+#### 创建队列
 
 在 `Spring Boot` 中可以通过注册 Bean 的方式创建队列。 有以下两种方式创建队列:
 
 
-**传统构造方法创建队列**
+- **通过构造器创建**
 
 ```java
 @Bean
@@ -51,7 +66,7 @@ public Queue directQueue() {
 }
 ```
 
-**建造者模式创建队列**
+- **通过建造者模式创建**
 
 ```java
 @Bean
@@ -68,9 +83,9 @@ public Queue builderQueue() {
 }
 ```
 
-### 4. 创建交换机
+#### 创建交换机
 
-在 `Spring Boot` 中可以通过注册 Bean 的方式创建交换机。RabbitMQ 支持多种交换机类型，常见的有 Direct、Fanout和Topic。下面是各类型交换机的说明：
+在 `Spring Boot` 中可以通过注册 Bean 的方式创建交换机。RabbitMQ 支持多种交换机类型，常见的类型交换机如下：
 
 | 交换机类型         | 说明                                                         | 代码示例 Bean 类型         |
 |------------------|------------------------------------------------------------|---------------------------|
@@ -115,9 +130,9 @@ public TopicExchange topicExchange() {
 }
 ```
 
-### 5. 绑定队列和交换机
+#### 绑定队列和交换机
 
-创建好队列和交换机后，需要将它们进行绑定。绑定的作用是指定消息从交换机路由到哪个队列。可以通过注册 `Binding` 类型的 Bean 来实现绑定。
+创建好队列和交换机后，需要将它们进行绑定。绑定的作用是指定消息从交换机路由到哪个队列。可以通过注册 `Binding` 类的Bean 来实现队列和交换机的绑定。
 
 常见交换机以其绑定方式如下：
 
@@ -128,9 +143,9 @@ public TopicExchange topicExchange() {
 | **Topic 交换机**  | 需要指定支持通配符的路由键                       |
 
 > [!TIP]
-> 下面的绑定示例假设已经创建了相应的队列和交换机 Bean。
+> 下面的示例，假设都已经注册了队列和交换机对应的Bean。
 
-**Fanout 交换机的绑定**
+- **Fanout 交换机的绑定**
 
 ```java
 @Bean
@@ -140,7 +155,7 @@ public Binding bindingFanout(Queue fanoutQueue, FanoutExchange fanoutExchange) {
 }
 ```
 
-**Direct 交换机的绑定**
+- **Direct 交换机的绑定**
 
 ```java
 @Bean
@@ -151,7 +166,7 @@ public Binding bindingDirect(Queue directQueue, DirectExchange directExchange) {
 }
 ```
 
-**Topic 交换机的绑定**
+- **Topic 交换机的绑定**
 
 ```java
 @Bean
@@ -162,7 +177,117 @@ public Binding bindingTopic(Queue topicQueue, TopicExchange topicExchange) {
 }
 ```
 
-### 6. 创建消费者
+### 发送消息到交换机
+
+通过 `RabbitTemplate` 将消息发布到交换机，由交换机根据绑定规则路由到队列。
+
+Spring AMQP 提供了 `RabbitTemplate` 作为消息发送的核心组件。你可以通过它将消息发送到指定的交换机和队列，支持多种消息体类型（字符串、对象、Map等），并可灵活设置路由键、消息属性等。
+
+**发送消息的基本方法**
+
+- **convertAndSend(exchange: String, routingKey: String, message: Object)**
+  发送消息到指定交换机和路由键，`message`参数可以是字符串、对象、Map等类型，方法会自动将消息体序列化为字节流。
+
+- **send(exchange: String, routingKey: String, message: Message)**
+  发送自定义 `Message` 类型对象，可以手动设置消息属性（如内容类型、消息头等），适用于需要精细控制消息元数据的场景。
+
+```java
+@Autowired
+private RabbitTemplate rabbitTemplate;
+
+public void sendMessages() {
+    // Direct Exchange 发送字符串消息
+    rabbitTemplate.convertAndSend("rabbitmq.direct", "blue", "Hello Direct Exchange!");
+
+    // Direct Exchange 发送对象消息（自动序列化为JSON）
+    Order order = new Order("1001", "手机", 1);
+    rabbitTemplate.convertAndSend("rabbitmq.direct", "order", order);
+
+    // Fanout Exchange 发送消息（不需要路由键）
+    rabbitTemplate.convertAndSend("rabbitmq.fanout", "", "Hello Fanout Exchange!");
+
+    // Topic Exchange 发送消息（路由键支持通配符）
+    rabbitTemplate.convertAndSend("rabbitmq.topic", "china.#", "中国所有新闻");
+    rabbitTemplate.convertAndSend("rabbitmq.topic", "*.news", "任意国家新闻");
+    rabbitTemplate.convertAndSend("rabbitmq.topic", "china.*.sports", "中国各地体育新闻");
+
+    // 发送带属性的消息
+    MessageProperties props = new MessageProperties();
+    props.setContentType(MessageProperties.CONTENT_TYPE_TEXT_PLAIN);
+    props.setHeader("myHeader", "headerValue");
+    Message message = new Message("消息带属性".getBytes(StandardCharsets.UTF_8), props);
+
+    rabbitTemplate.send("rabbitmq.direct", "blue", message);
+}
+```
+
+#### 自定义序列化器
+
+默认情况下，`RabbitTemplate` 会使用 Jackson 将对象序列化为 JSON 格式发送。你可以通过注册 `MessageConverter` 实现类为`Bean`自定义序列化方式。
+
+```java
+@Bean
+public MessageConverter messageConverter() {
+    return new Jackson2JsonMessageConverter();
+}
+```
+
+> [!NOTE]
+> 使用`convertAndSend`方法发送的消息才会使用序列化器序列化
+
+#### 延迟消息
+
+**延迟消息**是指交换机中的消息在指定时间过后才投递消息到队列中. 通过以下步骤使用延迟消息这个特性:
+
+> [!TIP]
+> 在**RabbitMq**中并没有原生支持延迟消息功能，需要额外安装 [延迟消息插件](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange)提供支持
+
+> [!NOTE]
+> 只有**延迟交换机**才能够处理带有延迟标记的消息
+
+1. 创建延迟交换机
+
+- **通过构造器创建**
+
+```java
+@Bean
+public CustomExchange delayedExchange() {
+    Map<String, Object> args = new HashMap<>();
+    args.put("x-delayed-type", "direct"); // 指定实际交换机类型
+    return new CustomExchange(
+        "rabbitmq.delayed",                // 交换机名称
+        "x-delayed-message",               // 交换机类型，启用延迟功能
+        true,                              // 是否持久化
+        false,                             // 是否自动删除
+        args                               // 交换机参数
+    );
+}
+```
+
+- **通过建造者模式创建**
+
+```java
+@Bean
+public Exchange delayedExchange() {
+    return ExchangeBuilder.directExchange("delayed_exchange")
+                          .delayed()
+                          .durable(true)
+                          .build();
+}
+```
+
+2. 发送延迟消息
+
+```java
+rabbitTemplate.convertAndSend("rabbitmq.delayed", "delayed.key", "延迟消息", message -> {
+    message.getMessageProperties().setDelay(5000); // 延迟5秒
+    return message;
+});
+```
+
+### 消费队列中的消息
+
+通过 `@RabbitListener` 监听队列，接收并处理消息。
 
 在 Spring Boot 中，RabbitMQ 消费者的实现方式主要有以下几种
 
@@ -256,113 +381,6 @@ public void handleMessage(String message) {
 }
 ```
 
-### 7. 消息发送
-
-Spring AMQP 提供了 `RabbitTemplate` 作为消息发送的核心组件。你可以通过它将消息发送到指定的交换机和队列，支持多种消息体类型（字符串、对象、Map等），并可灵活设置路由键、消息属性等。
-
-
-**发送消息的基本方法**
-
-- **convertAndSend(exchange: String, routingKey: String, message: Object)**  
-  发送消息到指定交换机和路由键，`message`参数可以是字符串、对象、Map等类型，方法会自动将消息体序列化为字节流。
-
-- **send(exchange: String, routingKey: String, message: Message)**  
-  发送自定义 `Message` 类型对象，可以手动设置消息属性（如内容类型、消息头等），适用于需要精细控制消息元数据的场景。
-
-```java
-@Autowired
-private RabbitTemplate rabbitTemplate;
-
-public void sendMessages() {
-    // Direct Exchange 发送字符串消息
-    rabbitTemplate.convertAndSend("rabbitmq.direct", "blue", "Hello Direct Exchange!");
-
-    // Direct Exchange 发送对象消息（自动序列化为JSON）
-    Order order = new Order("1001", "手机", 1);
-    rabbitTemplate.convertAndSend("rabbitmq.direct", "order", order);
-
-    // Fanout Exchange 发送消息（不需要路由键）
-    rabbitTemplate.convertAndSend("rabbitmq.fanout", "", "Hello Fanout Exchange!");
-
-    // Topic Exchange 发送消息（路由键支持通配符）
-    rabbitTemplate.convertAndSend("rabbitmq.topic", "china.#", "中国所有新闻");
-    rabbitTemplate.convertAndSend("rabbitmq.topic", "*.news", "任意国家新闻");
-    rabbitTemplate.convertAndSend("rabbitmq.topic", "china.*.sports", "中国各地体育新闻");
-
-    // 发送带属性的消息
-    MessageProperties props = new MessageProperties();
-    props.setContentType(MessageProperties.CONTENT_TYPE_TEXT_PLAIN);
-    props.setHeader("myHeader", "headerValue");
-    Message message = new Message("消息带属性".getBytes(StandardCharsets.UTF_8), props);
-
-    rabbitTemplate.send("rabbitmq.direct", "blue", message);
-}
-```
-
-#### 自定义序列化器
-
-默认情况下，`RabbitTemplate` 会使用 Jackson 将对象序列化为 JSON 格式发送。你可以通过注册 `MessageConverter` 实现类为`Bean`自定义序列化方式。
-
-```java
-@Bean
-public MessageConverter messageConverter() {
-    return new Jackson2JsonMessageConverter();
-}
-```
-
-> [!NOTE]
-> 使用`convertAndSend`方法发送的消息才会使用序列化器序列化
-
-#### 延迟消息
-
-**延迟消息**是指交换机中的消息在指定时间过后才投递消息到队列中. 通过以下步骤使用延迟消息这个特性:
-
-> [!TIP]
-> 在**RabbitMq**中并没有原生支持延迟消息功能，需要额外安装 [延迟消息插件](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange)提供支持
-
-> [!NOTE]
-> 只有**延迟交换机**才能能够处理带有延迟标记的消息
-
-1. 创建延迟交换机
-
-**通过构造器创建**
-
-```java
-@Bean
-public CustomExchange delayedExchange() {
-    Map<String, Object> args = new HashMap<>();
-    args.put("x-delayed-type", "direct"); // 指定实际交换机类型
-    return new CustomExchange(
-        "rabbitmq.delayed",                // 交换机名称
-        "x-delayed-message",               // 交换机类型，启用延迟功能
-        true,                              // 是否持久化
-        false,                             // 是否自动删除
-        args                               // 交换机参数
-    );
-}
-```
-
-**通过建造者模式创建**
-
-```java
-@Bean
-public Exchange delayedExchange() {
-    return ExchangeBuilder.directExchange("delayed_exchange")
-                          .delayed()
-                          .durable(true)
-                          .build();
-}
-```
-
-2. 发送延迟消息
-
-```java
-rabbitTemplate.convertAndSend("rabbitmq.delayed", "delayed.key", "延迟消息", message -> {
-    message.getMessageProperties().setDelay(5000); // 延迟5秒
-    return message;
-});
-```
-
 ## 通配符规则
 
 主题交换机支持根据通配符路由,  通配符规则如下:
@@ -380,7 +398,7 @@ rabbitTemplate.convertAndSend("rabbitmq.delayed", "delayed.key", "延迟消息",
 
 `Spring AMQP`提供了一些配置选项来提高消息可靠性
 
-### 生产者配置
+### 生产者消息可靠性
 
 ```yaml
 spring:
@@ -484,7 +502,7 @@ public class RabbitConfig {
             }
         });
 
-        // 消息从交换机路由到队列失败回调
+        // 消息尝试从交换机路由到队列失败时触发该回调
         rabbitTemplate.setReturnCallback(new RabbitTemplate.ReturnCallback() {
             @Override
             public void returnedMessage(Message message, int replyCode, String replyText,
@@ -498,7 +516,7 @@ public class RabbitConfig {
 }
 ```
 
-### 消费者配置
+### 消费者消息可靠性
 
 ```yaml
 spring:
