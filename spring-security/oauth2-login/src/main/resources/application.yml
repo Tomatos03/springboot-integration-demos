@@ -1,0 +1,12 @@
+server:
+  port: 8080
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: your-client-id
+            client-secret: your-client-secret
+            scope: read:user,user:email
