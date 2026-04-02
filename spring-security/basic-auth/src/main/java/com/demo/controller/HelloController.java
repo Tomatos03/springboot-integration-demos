@@ -11,13 +11,13 @@ import java.security.Principal;
 
 @RestController
 public class HelloController {
-    @PreAuthorize("hasRole('saler')")
+    @PreAuthorize("hasRole('SALER')")
     @GetMapping("/hello")
     public String hello() {
         return "Hello";
     }
 
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/welcome")
     public Principal welcome(Principal principal) {
         return principal;

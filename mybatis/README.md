@@ -14,7 +14,7 @@
 3. 配置 Mybatis 信息 (参考本项目的`application.xml`)
 4. 创建 Mapper 接口 (参考本项目的`com.demo.mapper`包)
 5. 创建 Mapper 接口类对应的 XML 文件 (参考本项目的`resources/com.demo.mapper`目录)
-6. 从 SpringBoot 容器中获取 Mapper 接口实现的 Bean (参考本项目的`Application.java`中的示例代码)
+6. 从 SpringBoot 容器中获取 Mapper 接口实现的 Bean (参考本项目的`MybatisApplication.java`中的示例代码)
 7. 调用 Mapper 接口中定义的方法进行操作数据库
 
 ## 参考

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 用户实体类
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
  * @date 2025/11/5
  */
 @Data
-@TableName("user")
+@TableName("sys_user")
 public class User {
     
     /**
@@ -53,10 +54,24 @@ public class User {
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
-    
+
+    /**
+     * 乐观锁版本号
+     */
+    @Version
+    @TableField("version")
+    private Integer version;
+
     /**
      * 逻辑删除字段（0-未删除，1-已删除）
      */
     @TableLogic
+    @TableField("deleted")
     private Integer deleted;
+
+    /**
+     * 用户角色列表（非数据库字段）
+     */
+    @TableField(exist = false)
+    private List<Role> roles;
 }

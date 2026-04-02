@@ -63,187 +63,43 @@
 
 ### 通用配置
 
-#### PasswordEncoder
+#### 密码加密
 
-Spring Security 在存储和校验密码时需要 `PasswordEncoder`。推荐使用 `BCryptPasswordEncoder`：
+见 [`SecurityBaseConfig.java:20-22`](common/src/main/java/com/demo/config/SecurityBaseConfig.java#L20-L22)
 
-```java
-// 注册 BCrypt 密码加密器，用于密码的加密和比对
-@Bean
-public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
-}
-```
+Spring Security 在存储和校验密码时需要 `PasswordEncoder`，负责注册时加密存储、登录时比对明文与密文。
 
-- `BCryptPasswordEncoder` 基于 BCrypt 哈希算法，每次生成的密文不同（含随机 salt），安全性高。
-- 注册用户时使用 `passwordEncoder.encode(rawPassword)` 加密存储。
-- 登录认证时 Spring Security 自动调用 `passwordEncoder.matches()` 比对。
+- 注册时需手动调用 `passwordEncoder.encode(rawPassword)` 加密后再进行存储
+- 登录时 Spring Security 自动调用 `passwordEncoder.matches()` 比对，无需手动处理
+
+| 算法 | 特点 | 适用场景 |
+|------|------|----------|
+| BCrypt | 含随机 salt，每次密文不同，计算可调 | Spring Security 推荐，通用场景 |
+| SHA-256 | 固定 salt 可被彩虹表攻击，需额外加盐 | 不推荐单独使用 |
+| PBKDF2 | 标准 NIST 推荐，可调迭代次数 | 政府/合规场景 |
+| Argon2 | 2015 年密码哈希竞赛冠军，抗 GPU 破解 | 高安全要求场景 |
 
 ---
 
 #### 跨域与 CSRF
 
-**跨域配置：**
+见 [`SecurityBaseConfig.java:24-44`](common/src/main/java/com/demo/config/SecurityBaseConfig.java#L24-L44)
 
-```java
-// 配置跨域策略：允许所有来源、方法和请求头
-@Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration config = new CorsConfiguration();
-    config.setAllowedOrigins(List.of("*"));   // 允许所有来源
-    config.setAllowedMethods(List.of("*"));   // 允许所有 HTTP 方法
-    config.setAllowedHeaders(List.of("*"));   // 允许所有请求头
-
-    // 注册跨域配置，对所有路径生效
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", config);
-    return source;
-}
-```
-
-> **注意：** `setAllowedOrigins(List.of("*"))` 与 `setAllowCredentials(true)` 不能同时使用。当启用凭证（携带 Cookie、HTTP 认证等）时，`Access-Control-Allow-Origin` 响应头不允许为 `*`，必须指定具体域名。因此，若需要携带凭证，应将 `setAllowedOrigins` 改为明确的域名列表：
->
-> ```java
-> config.setAllowedOrigins(List.of("https://example.com", "https://app.example.com"));
-> config.setAllowCredentials(true);
-> ```
-
-**在 `SecurityFilterChain` 中启用：**
-
-```java
-// 在 SecurityFilterChain 中启用跨域支持
-@Bean
-public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    return http
-        // ... 其他配置 ...
-        .cors(cors -> cors.configurationSource(corsConfiguration))
-        // ... 其他配置 ...
-        .build();
-}
-```
-
-**关闭 CSRF：**
-
-```java
-// 在 SecurityFilterChain 中关闭 CSRF 保护
-@Bean
-public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    return http
-        // ... 其他配置 ...
-        .csrf(csrf -> csrf.disable())
-        // ... 其他配置 ...
-        .build();
-}
-```
-
-> 前后端分离场景通常需要关闭 CSRF。如果未关闭，前端请求需携带 Spring 生成的 `csrf_token`。
+> **注意：** `setAllowedOrigins(List.of("*"))` 与 `setAllowCredentials(true)` 不能同时使用。若需携带凭证，应指定具体域名列表。
 
 ---
 
 #### 异常处理
 
-Spring Security 提供两个核心异常处理接口：
-
-**`AuthenticationEntryPoint`（未认证）：**
-
-```java
-// 处理未认证的请求：用户未登录就访问受保护资源
-@Component
-public class MyAuthenticationEntryPoint implements AuthenticationEntryPoint {
-    @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response,
-                         AuthenticationException authException) throws IOException {
-        // 返回 403 状态码和 JSON 错误信息
-        response.setStatus(HttpStatus.FORBIDDEN.value());
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(JSONUtil.toJsonStr(Result.error("请先认证")));
-    }
-}
-```
-
-**`AccessDeniedHandler`（权限不足）：**
-
-```java
-// 处理权限不足的请求：用户已认证但无权访问该资源
-@Component
-public class MyAccessDeniedHandler implements AccessDeniedHandler {
-    @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response,
-                       AccessDeniedException ex) throws IOException {
-        // 返回 403 状态码和 JSON 错误信息
-        response.setStatus(HttpStatus.FORBIDDEN.value());
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(JSONUtil.toJsonStr(Result.error("当前用户权限不足")));
-    }
-}
-```
-
-**注册到 `SecurityFilterChain`：**
-
-```java
-// 在 SecurityFilterChain 中注册异常处理器
-@Bean
-public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    return http
-        .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-        // ... 其他配置 ...
-
-        // 注册异常处理器
-        .exceptionHandling(exception -> {
-            // 权限不足时的处理器
-            exception.accessDeniedHandler(accessDeniedHandler);
-            // 未认证时的处理器
-            exception.authenticationEntryPoint(myAuthenticationEntryPoint);
-        })
-
-        // ... 其他配置 ...
-        .build();
-}
-```
+- 未认证：[`MyAuthenticationEntryPoint.java`](common/src/main/java/com/demo/handler/MyAuthenticationEntryPoint.java)
+- 权限不足：[`MyAccessDeniedHandler.java`](common/src/main/java/com/demo/handler/MyAccessDeniedHandler.java)
 
 ---
 
 #### 注解式授权
 
-启用注解后，可在 Controller 方法上细粒度控制访问权限。
-
-**启用注解：**
-
-```java
-// 启用方法级安全注解，支持 @PreAuthorize、@PostAuthorize 等
-@EnableMethodSecurity
-@Configuration
-public class SecurityConfig { ... }
-```
-
-**使用 `@PreAuthorize`：**
-
-```java
-@RestController
-public class HelloController {
-
-    // 仅允许角色为 saler 的用户访问
-    @PreAuthorize("hasRole('saler')")
-    @GetMapping("/hello")
-    public String hello() {
-        return "Hello";
-    }
-
-    // 仅允许拥有 'product:read' 权限的用户访问
-    @PreAuthorize("hasAuthority('product:read')")
-    @GetMapping("/product")
-    public String product() {
-        return "Product Info";
-    }
-
-    // 允许拥有任意一个权限的用户访问
-    @PreAuthorize("hasAnyAuthority('order:read', 'order:write')")
-    @GetMapping("/order")
-    public String order() {
-        return "Order Info";
-    }
-}
-```
+- 启用：`@EnableMethodSecurity` 见 [`SecurityBaseConfig.java:16`](common/src/main/java/com/demo/config/SecurityBaseConfig.java#L16)
+- 示例：[`HelloController.java`](form-auth/src/main/java/com/demo/controller/HelloController.java)
 
 ---
 

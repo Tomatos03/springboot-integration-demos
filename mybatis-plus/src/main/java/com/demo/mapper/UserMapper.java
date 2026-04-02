@@ -47,4 +47,8 @@ public interface UserMapper extends BaseMapper<User> {
      */
     Integer countByAgeRange(@Param("minAge") Integer minAge, 
                            @Param("maxAge") Integer maxAge);
+
+    List<User> selectUsersWithRoles();
+
+    User selectUserWithRolesById(@Param("id") Long id);
 }

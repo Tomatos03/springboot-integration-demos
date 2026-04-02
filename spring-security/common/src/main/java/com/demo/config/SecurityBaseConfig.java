@@ -1,6 +1,7 @@
 package com.demo.config;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -14,8 +15,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @EnableMethodSecurity
+@Configuration
 public class SecurityBaseConfig {
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -31,17 +32,5 @@ public class SecurityBaseConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
-    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   CorsConfigurationSource corsSource) throws Exception {
-        return http
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .cors(cors -> cors.configurationSource(corsSource))
-                .csrf(csrf -> csrf.disable())
-                .build();
     }
 }

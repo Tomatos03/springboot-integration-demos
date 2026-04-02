@@ -10,13 +10,26 @@
         <result column="age" property="age"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
         <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <resultMap id="UserWithRolesResultMap" type="com.demo.entity.User" extends="BaseResultMap">
+        <collection property="roles" ofType="com.demo.entity.Role">
+            <id column="role_id" property="id"/>
+            <result column="role_name" property="roleName"/>
+            <result column="role_code" property="roleCode"/>
+            <result column="role_description" property="description"/>
+            <result column="role_create_time" property="createTime"/>
+            <result column="role_update_time" property="updateTime"/>
+            <result column="role_deleted" property="deleted"/>
+        </collection>
     </resultMap>
 
     <!-- 自定义查询：根据用户名模糊查询 -->
     <select id="selectByUsernameLike" resultMap="BaseResultMap">
-        SELECT id, username, email, age, create_time, update_time, deleted
-        FROM user
+        SELECT id, username, email, age, create_time, update_time, version, deleted
+        FROM sys_user
         WHERE deleted = 0
         <if test="username != null and username != ''">
             AND username LIKE CONCAT('%', #{username}, '%')
@@ -26,8 +39,8 @@
 
     <!-- 自定义分页查询：根据年龄范围查询 -->
     <select id="selectPageByAgeRange" resultMap="BaseResultMap">
-        SELECT id, username, email, age, create_time, update_time, deleted
-        FROM user
+        SELECT id, username, email, age, create_time, update_time, version, deleted
+        FROM sys_user
         WHERE deleted = 0
         <if test="minAge != null">
             AND age &gt;= #{minAge}
@@ -41,7 +54,7 @@
     <!-- 自定义统计查询：统计指定年龄范围的用户数量 -->
     <select id="countByAgeRange" resultType="java.lang.Integer">
         SELECT COUNT(*)
-        FROM user
+        FROM sys_user
         WHERE deleted = 0
         <if test="minAge != null">
             AND age &gt;= #{minAge}
@@ -49,6 +62,27 @@
         <if test="maxAge != null">
             AND age &lt;= #{maxAge}
         </if>
+    </select>
+
+    <select id="selectUsersWithRoles" resultMap="UserWithRolesResultMap">
+        SELECT u.id, u.username, u.email, u.age, u.create_time, u.update_time, u.version, u.deleted,
+               r.id AS role_id, r.role_name, r.role_code, r.description AS role_description,
+               r.create_time AS role_create_time, r.update_time AS role_update_time, r.deleted AS role_deleted
+        FROM sys_user u
+        LEFT JOIN sys_user_role ur ON u.id = ur.user_id
+        LEFT JOIN sys_role r ON ur.role_id = r.id
+        WHERE u.deleted = 0
+        ORDER BY u.create_time DESC
+    </select>
+
+    <select id="selectUserWithRolesById" resultMap="UserWithRolesResultMap">
+        SELECT u.id, u.username, u.email, u.age, u.create_time, u.update_time, u.version, u.deleted,
+               r.id AS role_id, r.role_name, r.role_code, r.description AS role_description,
+               r.create_time AS role_create_time, r.update_time AS role_update_time, r.deleted AS role_deleted
+        FROM sys_user u
+        LEFT JOIN sys_user_role ur ON u.id = ur.user_id
+        LEFT JOIN sys_role r ON ur.role_id = r.id
+        WHERE u.deleted = 0 AND u.id = #{id}
     </select>
 
 </mapper>

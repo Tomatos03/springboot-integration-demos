@@ -93,4 +93,30 @@ public interface IUserService extends IService<User> {
      * @return 用户列表
      */
     List<User> getUsersByCondition(String username, Integer minAge, Integer maxAge);
+
+    boolean saveSelective(User user);
+
+    boolean updateByCondition(User user, String username, Integer minAge, Integer maxAge);
+
+    boolean updateSelectiveById(User user);
+
+    boolean deleteByCondition(String username, Integer minAge, Integer maxAge);
+
+    boolean batchDeleteByIds(List<Long> ids);
+
+    User getOneByCondition(String username, Integer age);
+
+    List<User> getUsersWithRoles();
+
+    User getUserWithRolesById(Long id);
+
+    List<User> getUsersByIds(List<Long> ids);
+
+    List<User> getUsersByNullCondition(boolean emailIsNull);
+
+    List<User> getUsersByNestedCondition(String username, Integer minAge, Integer maxAge);
+
+    boolean updateByWrapper(Long id, String email, Integer age);
+
+    boolean updateByLambdaWrapper(Long id, String email, Integer age);
 }

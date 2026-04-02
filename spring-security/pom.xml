@@ -16,8 +16,9 @@
     <modules>
         <module>common</module>
         <module>form-auth</module>
-        <module>sms-login</module>
-        <module>oauth2-login</module>
+        <module>sms-auth</module>
+        <module>oauth2-auth</module>
+        <module>basic-auth</module>
     </modules>
 
     <properties>

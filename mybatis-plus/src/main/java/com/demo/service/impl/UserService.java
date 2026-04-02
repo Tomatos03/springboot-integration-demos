@@ -2,6 +2,8 @@ package com.demo.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -121,5 +123,102 @@ public class UserService extends ServiceImpl<UserMapper, User> implements IUserS
         queryWrapper.orderByDesc("create_time");
         
         return list(queryWrapper);
+    }
+
+    @Override
+    public boolean saveSelective(User user) {
+        return save(user);
+    }
+
+    @Override
+    public boolean updateByCondition(User user, String username, Integer minAge, Integer maxAge) {
+        LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.like(username != null, User::getUsername, username)
+                     .ge(minAge != null, User::getAge, minAge)
+                     .le(maxAge != null, User::getAge, maxAge);
+        return update(user, updateWrapper);
+    }
+
+    @Override
+    public boolean updateSelectiveById(User user) {
+        return updateById(user);
+    }
+
+    @Override
+    public boolean deleteByCondition(String username, Integer minAge, Integer maxAge) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.like(username != null, User::getUsername, username)
+                    .ge(minAge != null, User::getAge, minAge)
+                    .le(maxAge != null, User::getAge, maxAge);
+        return remove(queryWrapper);
+    }
+
+    @Override
+    public boolean batchDeleteByIds(List<Long> ids) {
+        return removeByIds(ids);
+    }
+
+    @Override
+    public User getOneByCondition(String username, Integer age) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(username != null, User::getUsername, username)
+                    .eq(age != null, User::getAge, age);
+        return getOne(queryWrapper);
+    }
+
+    @Override
+    public List<User> getUsersWithRoles() {
+        return baseMapper.selectUsersWithRoles();
+    }
+
+    @Override
+    public User getUserWithRolesById(Long id) {
+        return baseMapper.selectUserWithRolesById(id);
+    }
+
+    @Override
+    public List<User> getUsersByIds(List<Long> ids) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(User::getId, ids);
+        return list(queryWrapper);
+    }
+
+    @Override
+    public List<User> getUsersByNullCondition(boolean emailIsNull) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        if (emailIsNull) {
+            queryWrapper.isNull(User::getEmail);
+        } else {
+            queryWrapper.isNotNull(User::getEmail);
+        }
+        return list(queryWrapper);
+    }
+
+    @Override
+    public List<User> getUsersByNestedCondition(String username, Integer minAge, Integer maxAge) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.and(w -> w.like(username != null, User::getUsername, username)
+                              .ge(minAge != null, User::getAge, minAge))
+                    .or()
+                    .le(maxAge != null, User::getAge, maxAge);
+        return list(queryWrapper);
+    }
+
+    @Override
+    public boolean updateByWrapper(Long id, String email, Integer age) {
+        UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("id", id)
+                     .set(email != null, "email", email)
+                     .set(age != null, "age", age);
+        return update(null, updateWrapper);
+    }
+
+    @Override
+    public boolean updateByLambdaWrapper(Long id, String email, Integer age) {
+        LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(User::getId, id)
+                     .set(email != null, User::getEmail, email)
+                     .set(age != null, User::getAge, age);
+        return update(null, updateWrapper);
     }
 }

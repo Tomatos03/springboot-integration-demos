@@ -16,10 +16,11 @@ public class TUser implements UserDetails {
     @JsonIgnore
     private String loginPwd;
     private String name;
+    private Collection<? extends GrantedAuthority> authorities;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return this.authorities;
     }
 
     @Override
