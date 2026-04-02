@@ -3,3 +3,10 @@ server:
 
 jwt:
   secret: defaultSecretKey123456
+  expiration: 86400000  # Token 过期时间（毫秒），86400000 = 1天
+
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379

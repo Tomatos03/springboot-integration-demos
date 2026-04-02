@@ -1,4 +1,4 @@
-package com.example.swagger3.enum;
+package com.example.swagger3.enums;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

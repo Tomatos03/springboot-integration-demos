@@ -1,7 +1,7 @@
 package com.example.swagger3.controller.advanced;
 
 import com.example.swagger3.dto.Result;
-import com.example.swagger3.enum.RoleEnum;
+import com.example.swagger3.enums.RoleEnum;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

@@ -10,7 +10,6 @@
     </parent>
 
     <artifactId>oauth2-auth</artifactId>
-    <name>OAuth2 Login</name>
     <description>基于 OAuth2 的第三方登录</description>
 
     <dependencies>

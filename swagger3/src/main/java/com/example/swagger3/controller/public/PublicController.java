@@ -1,4 +1,4 @@
-package com.example.swagger3.controller.public;
+package com.example.swagger3.controller.pub;
 
 import com.example.swagger3.dto.Result;
 import org.springframework.web.bind.annotation.GetMapping;

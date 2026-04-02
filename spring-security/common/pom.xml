@@ -12,6 +12,7 @@
     <artifactId>common</artifactId>
     <name>Common</name>
     <description>公共模块 - 存放各认证模块共用代码</description>
+    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
@@ -35,5 +36,20 @@
             <artifactId>lombok</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
