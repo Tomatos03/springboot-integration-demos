@@ -1,0 +1,62 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: alibaba-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: public
+        group: DEFAULT_GROUP
+    sentinel:
+      # Sentinel 控制台地址（需单独部署 sentinel-dashboard）
+      transport:
+        dashboard: 127.0.0.1:8080
+        # 客户端通信端口（默认 8719）
+        port: 8719
+      # 开启网关限流
+      scg:
+        fallback:
+          mode: response
+          response-status: 429
+          response-body-type: application/json
+          response-body: '{"code":429,"message":"系统繁忙"}'
+
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: account-route
+          uri: lb://account-service
+          predicates:
+            - Path=/account/**
+          filters:
+            - StripPrefix=1
+        - id: order-route
+          uri: lb://order-service
+          predicates:
+            - Path=/order/**
+          filters:
+            - StripPrefix=1
+            - RequestTimestamp
+        - id: storage-route
+          uri: lb://storage-service
+          predicates:
+            - Path=/storage/**
+          filters:
+            - StripPrefix=1
+management:
+  endpoints:
+    web:
+      exposure:
+        include: gateway,health,info
+  endpoint:
+    health:
+      show-details: always
+feign:
+  sentinel:
+    enabled: true

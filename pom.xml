@@ -26,6 +26,7 @@
         <module>spring-task</module>
         <module>mybatis-plus</module>
         <module>redis</module>
+        <module>spring-cloud-alibaba-demo</module>
     </modules>
 
     <properties>

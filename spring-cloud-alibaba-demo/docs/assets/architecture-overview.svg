@@ -1,0 +1,220 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="860" viewBox="0 0 1200 860">
+  <defs>
+    <style>
+      .nt { font-family: 'Segoe UI','PingFang SC',sans-serif; font-weight: 700; font-size: 14px; fill: #f1f5f9; }
+      .np { font-family: 'Consolas',monospace; font-weight: 600; font-size: 11px; fill: #94a3b8; }
+      .nd { font-family: 'Segoe UI','PingFang SC',sans-serif; font-weight: 500; font-size: 11px; fill: #64748b; }
+      .tg { font-family: 'Consolas',monospace; font-weight: 600; font-size: 10px; }
+      .zl { font-family: 'Segoe UI','PingFang SC',sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 1px; }
+      @keyframes df { to { stroke-dashoffset: -20; } }
+      .fl { animation: df 1.5s linear infinite; }
+    </style>
+    <filter id="sh"><feDropShadow dx="0" dy="3" stdDeviation="8" flood-color="#000" flood-opacity=".4"/></filter>
+    <marker id="mB" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8z" fill="#3b82f6"/></marker>
+    <marker id="mC" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8z" fill="#06b6d4"/></marker>
+    <marker id="mG" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8z" fill="#10b981"/></marker>
+    <marker id="mA" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8z" fill="#f59e0b"/></marker>
+    <marker id="mP" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8z" fill="#8b5cf6"/></marker>
+    <linearGradient id="gW" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#3b82f6" stop-opacity=".12"/><stop offset="100%" stop-color="#1d4ed8" stop-opacity=".05"/></linearGradient>
+    <linearGradient id="gS" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#06b6d4" stop-opacity=".10"/><stop offset="100%" stop-color="#0891b2" stop-opacity=".03"/></linearGradient>
+    <linearGradient id="gN" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#10b981" stop-opacity=".12"/><stop offset="100%" stop-color="#059669" stop-opacity=".04"/></linearGradient>
+    <linearGradient id="gT" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#f59e0b" stop-opacity=".12"/><stop offset="100%" stop-color="#d97706" stop-opacity=".04"/></linearGradient>
+    <linearGradient id="gK" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#8b5cf6" stop-opacity=".10"/><stop offset="100%" stop-color="#7c3aed" stop-opacity=".03"/></linearGradient>
+    <linearGradient id="gD" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#f59e0b" stop-opacity=".08"/><stop offset="100%" stop-color="#92400e" stop-opacity=".04"/></linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="860" fill="#0c1222"/>
+
+  <!-- ===== ZONE 1: Gateway ===== -->
+  <rect x="30" y="15" width="1140" height="85" rx="10" fill="#0f172a" stroke="#1e2d4d" opacity=".6"/>
+  <text x="50" y="34" class="zl" fill="#3b82f6">API GATEWAY</text>
+
+  <g filter="url(#sh)">
+    <rect x="50" y="45" width="160" height="42" rx="8" fill="#131b2e" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="130" y="71" class="nt" fill="#93c5fd" text-anchor="middle">Client / curl</text>
+  </g>
+
+  <g filter="url(#sh)">
+    <rect x="280" y="42" width="220" height="48" rx="10" fill="url(#gW)" stroke="#3b82f6" stroke-width="2"/>
+    <text x="390" y="64" class="nt" text-anchor="middle">alibaba-gateway</text>
+    <text x="390" y="80" class="np" text-anchor="middle">:8888</text>
+  </g>
+
+  <!-- Client to Gateway -->
+  <line x1="210" y1="66" x2="280" y2="66" stroke="#3b82f6" stroke-width="2" marker-end="url(#mB)"/>
+  <text x="245" y="59" class="nd" text-anchor="middle" fill="#60a5fa">HTTP</text>
+
+  <!-- ===== ZONE 2: Services ===== -->
+  <rect x="30" y="115" width="1140" height="170" rx="10" fill="#0f172a" stroke="#1e2d4d" opacity=".6"/>
+  <text x="50" y="134" class="zl" fill="#06b6d4">BUSINESS SERVICES</text>
+
+  <!-- order-service -->
+  <g filter="url(#sh)">
+    <rect x="50" y="148" width="320" height="118" rx="10" fill="url(#gS)" stroke="#06b6d4" stroke-width="2"/>
+    <text x="70" y="172" class="nt">order-service</text>
+    <text x="70" y="190" class="np">:8082</text>
+    <text x="70" y="215" class="nd">订单创建 / 下单 / 库存扣减调用</text>
+    <rect x="70" y="248" width="44" height="16" rx="4" fill="#06b6d4" opacity=".15" stroke="#06b6d4" stroke-width=".5"/>
+    <text x="92" y="260" class="tg" fill="#22d3ee" text-anchor="middle">Feign</text>
+    <rect x="120" y="248" width="44" height="16" rx="4" fill="#06b6d4" opacity=".15" stroke="#06b6d4" stroke-width=".5"/>
+    <text x="142" y="260" class="tg" fill="#22d3ee" text-anchor="middle">Seata</text>
+    <rect x="170" y="248" width="56" height="16" rx="4" fill="#06b6d4" opacity=".15" stroke="#06b6d4" stroke-width=".5"/>
+    <text x="198" y="260" class="tg" fill="#22d3ee" text-anchor="middle">Sentinel</text>
+  </g>
+
+  <!-- storage-service -->
+  <g filter="url(#sh)">
+    <rect x="410" y="148" width="320" height="118" rx="10" fill="url(#gS)" stroke="#06b6d4" stroke-width="2"/>
+    <text x="430" y="172" class="nt">storage-service</text>
+    <text x="430" y="190" class="np">:8083</text>
+    <text x="430" y="215" class="nd">库存管理 / 扣减 / 查询</text>
+    <rect x="430" y="248" width="44" height="16" rx="4" fill="#06b6d4" opacity=".15" stroke="#06b6d4" stroke-width=".5"/>
+    <text x="452" y="260" class="tg" fill="#22d3ee" text-anchor="middle">Feign</text>
+    <rect x="480" y="248" width="44" height="16" rx="4" fill="#06b6d4" opacity=".15" stroke="#06b6d4" stroke-width=".5"/>
+    <text x="502" y="260" class="tg" fill="#22d3ee" text-anchor="middle">Seata</text>
+  </g>
+
+  <!-- account-service -->
+  <g filter="url(#sh)">
+    <rect x="770" y="148" width="320" height="118" rx="10" fill="url(#gS)" stroke="#06b6d4" stroke-width="2"/>
+    <text x="790" y="172" class="nt">account-service</text>
+    <text x="790" y="190" class="np">:8081</text>
+    <text x="790" y="215" class="nd">用户账户 / 余额扣减 / 充值</text>
+    <rect x="790" y="248" width="44" height="16" rx="4" fill="#06b6d4" opacity=".15" stroke="#06b6d4" stroke-width=".5"/>
+    <text x="812" y="260" class="tg" fill="#22d3ee" text-anchor="middle">Feign</text>
+    <rect x="840" y="248" width="44" height="16" rx="4" fill="#06b6d4" opacity=".15" stroke="#06b6d4" stroke-width=".5"/>
+    <text x="862" y="260" class="tg" fill="#22d3ee" text-anchor="middle">Seata</text>
+  </g>
+
+  <!-- Gateway to order-service -->
+  <path d="M390,90 C390,120 250,125 210,148" stroke="#3b82f6" stroke-width="2" fill="none" marker-end="url(#mB)"/>
+  <text x="310" y="118" class="nd" text-anchor="middle" fill="#60a5fa">route</text>
+
+  <!-- order to storage -->
+  <line x1="370" y1="207" x2="410" y2="207" stroke="#06b6d4" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#mC)" class="fl"/>
+  <text x="390" y="199" class="nd" text-anchor="middle" fill="#22d3ee">Feign</text>
+
+  <!-- order to account -->
+  <path d="M370,230 C500,250 660,250 770,230" stroke="#06b6d4" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#mC)" class="fl"/>
+  <text x="570" y="258" class="nd" text-anchor="middle" fill="#22d3ee">Feign</text>
+
+  <!-- ===== ZONE 3: Connections ===== -->
+  <rect x="30" y="300" width="1140" height="100" rx="8" fill="#0d1526" stroke="#1e2d4d" stroke-dasharray="4 3" opacity=".7"/>
+  <text x="50" y="318" class="zl" fill="#475569">CONNECTIONS</text>
+
+  <!-- MySQL lines: converge at x=570 -->
+  <line x1="210" y1="266" x2="210" y2="350" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5 4" opacity=".5"/>
+  <line x1="210" y1="350" x2="570" y2="350" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5 4" opacity=".5"/>
+  <line x1="570" y1="266" x2="570" y2="350" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5 4" opacity=".5"/>
+  <line x1="930" y1="266" x2="930" y2="370" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5 4" opacity=".5"/>
+  <line x1="930" y1="370" x2="570" y2="370" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5 4" opacity=".5"/>
+  <line x1="570" y1="350" x2="570" y2="500" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5 4" opacity=".5"/>
+  <rect x="545" y="358" width="50" height="14" rx="4" fill="#0d1526" stroke="#f59e0b" stroke-width=".5" opacity=".8"/>
+  <text x="570" y="369" class="tg" fill="#fbbf24" text-anchor="middle">JDBC</text>
+
+  <!-- Nacos lines: converge at x=150 -->
+  <path d="M210,266 C160,320 130,360 150,600" stroke="#10b981" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#mG)" class="fl" opacity=".7"/>
+  <path d="M570,266 C420,320 240,360 170,600" stroke="#10b981" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#mG)" class="fl" opacity=".7"/>
+  <path d="M930,266 C700,320 350,360 190,600" stroke="#10b981" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#mG)" class="fl" opacity=".7"/>
+  <rect x="115" y="330" width="80" height="14" rx="4" fill="#0d1526" stroke="#10b981" stroke-width=".5" opacity=".8"/>
+  <text x="155" y="341" class="tg" fill="#34d399" text-anchor="middle">gRPC :9848</text>
+
+  <!-- Seata lines: converge at x=190 -->
+  <path d="M210,266 C190,340 175,400 190,720" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#mA)" class="fl" opacity=".7"/>
+  <path d="M570,266 C450,340 310,400 210,720" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#mA)" class="fl" opacity=".7"/>
+  <path d="M930,266 C760,340 430,400 230,720" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#mA)" class="fl" opacity=".7"/>
+  <rect x="155" y="380" width="70" height="14" rx="4" fill="#0d1526" stroke="#f59e0b" stroke-width=".5" opacity=".8"/>
+  <text x="190" y="391" class="tg" fill="#fcd34d" text-anchor="middle">TC :8091</text>
+
+  <!-- SkyWalking lines: converge at x=850 -->
+  <line x1="210" y1="266" x2="850" y2="400" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4" opacity=".3"/>
+  <line x1="570" y1="266" x2="850" y2="400" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4" opacity=".3"/>
+  <line x1="930" y1="266" x2="850" y2="400" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4" opacity=".3"/>
+  <line x1="850" y1="400" x2="850" y2="550" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4" opacity=".3"/>
+  <rect x="815" y="388" width="70" height="14" rx="4" fill="#0d1526" stroke="#8b5cf6" stroke-width=".5" opacity=".8"/>
+  <text x="850" y="399" class="tg" fill="#c4b5fd" text-anchor="middle">Java Agent</text>
+
+  <!-- ===== ZONE 4: Infrastructure ===== -->
+  <rect x="30" y="415" width="1140" height="430" rx="10" fill="#0f172a" stroke="#1e2d4d" opacity=".6"/>
+  <text x="50" y="434" class="zl" fill="#10b981">INFRASTRUCTURE</text>
+
+  <!-- MySQL -->
+  <g filter="url(#sh)">
+    <rect x="410" y="450" width="320" height="65" rx="10" fill="url(#gD)" stroke="#f59e0b" stroke-width="2"/>
+    <text x="430" y="478" class="nt" fill="#fbbf24">MySQL</text>
+    <text x="430" y="496" class="nd">cloud_demo / seata - 主数据存储</text>
+  </g>
+
+  <!-- Nacos -->
+  <g filter="url(#sh)">
+    <rect x="50" y="535" width="320" height="110" rx="10" fill="url(#gN)" stroke="#10b981" stroke-width="2"/>
+    <text x="70" y="559" class="nt" fill="#6ee7b7">Nacos</text>
+    <text x="70" y="577" class="np">:8848 / :9848</text>
+    <text x="70" y="600" class="nd">服务注册 / 发现 / 配置中心</text>
+    <rect x="70" y="625" width="56" height="16" rx="4" fill="#10b981" opacity=".15" stroke="#10b981" stroke-width=".5"/>
+    <text x="98" y="637" class="tg" fill="#34d399" text-anchor="middle">Registry</text>
+    <rect x="132" y="625" width="50" height="16" rx="4" fill="#10b981" opacity=".15" stroke="#10b981" stroke-width=".5"/>
+    <text x="157" y="637" class="tg" fill="#34d399" text-anchor="middle">Config</text>
+  </g>
+
+  <!-- Seata -->
+  <g filter="url(#sh)">
+    <rect x="50" y="665" width="320" height="110" rx="10" fill="url(#gT)" stroke="#f59e0b" stroke-width="2"/>
+    <text x="70" y="689" class="nt" fill="#fcd34d">Seata</text>
+    <text x="70" y="707" class="np">:8091</text>
+    <text x="70" y="730" class="nd">AT 模式分布式事务协调</text>
+    <rect x="70" y="755" width="50" height="16" rx="4" fill="#f59e0b" opacity=".15" stroke="#f59e0b" stroke-width=".5"/>
+    <text x="95" y="767" class="tg" fill="#fcd34d" text-anchor="middle">TC/TM</text>
+    <rect x="126" y="755" width="56" height="16" rx="4" fill="#f59e0b" opacity=".15" stroke="#f59e0b" stroke-width=".5"/>
+    <text x="154" y="767" class="tg" fill="#fcd34d" text-anchor="middle">AT Mode</text>
+  </g>
+
+  <!-- SkyWalking -->
+  <g filter="url(#sh)">
+    <rect x="410" y="535" width="730" height="240" rx="12" fill="url(#gK)" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="434" y="558" class="zl" fill="#a78bfa">SKYWALKING</text>
+    <text x="1120" y="558" class="nd" text-anchor="end">APM 可观测平台</text>
+
+    <!-- OAP -->
+    <rect x="430" y="572" width="320" height="90" rx="8" fill="#131b2e" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="450" y="596" class="nt" fill="#c4b5fd">OAP Server</text>
+    <text x="450" y="614" class="np">:11800 / :12800</text>
+    <text x="450" y="640" class="nd">数据采集 / 分析 / 存储</text>
+
+    <!-- Arrow -->
+    <line x1="750" y1="617" x2="790" y2="617" stroke="#8b5cf6" stroke-width="2" marker-end="url(#mP)" opacity=".8"/>
+
+    <!-- UI -->
+    <rect x="790" y="572" width="330" height="90" rx="8" fill="#131b2e" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="810" y="596" class="nt" fill="#c4b5fd">Dashboard</text>
+    <text x="810" y="614" class="np">:18080</text>
+    <text x="810" y="640" class="nd">拓扑 / Trace / Metrics</text>
+
+    <!-- Tags -->
+    <rect x="446" y="678" width="50" height="18" rx="5" fill="#8b5cf6" opacity=".1" stroke="#8b5cf6" stroke-width=".5"/>
+    <text x="471" y="691" class="tg" fill="#c4b5fd" text-anchor="middle">Traces</text>
+    <rect x="504" y="678" width="56" height="18" rx="5" fill="#8b5cf6" opacity=".1" stroke="#8b5cf6" stroke-width=".5"/>
+    <text x="532" y="691" class="tg" fill="#c4b5fd" text-anchor="middle">Metrics</text>
+    <rect x="568" y="678" width="64" height="18" rx="5" fill="#8b5cf6" opacity=".1" stroke="#8b5cf6" stroke-width=".5"/>
+    <text x="600" y="691" class="tg" fill="#c4b5fd" text-anchor="middle">Topology</text>
+    <rect x="640" y="678" width="56" height="18" rx="5" fill="#8b5cf6" opacity=".1" stroke="#8b5cf6" stroke-width=".5"/>
+    <text x="668" y="691" class="tg" fill="#c4b5fd" text-anchor="middle">Alarms</text>
+    <rect x="704" y="678" width="64" height="18" rx="5" fill="#8b5cf6" opacity=".1" stroke="#8b5cf6" stroke-width=".5"/>
+    <text x="736" y="691" class="tg" fill="#c4b5fd" text-anchor="middle">Profiling</text>
+  </g>
+
+  <!-- ===== LEGEND ===== -->
+  <g transform="translate(50,852)">
+    <line x1="0" y1="-4" x2="35" y2="-4" stroke="#3b82f6" stroke-width="2" marker-end="url(#mB)"/>
+    <text x="42" y="0" class="nd" fill="#60a5fa">同步调用</text>
+    <line x1="110" y1="-4" x2="145" y2="-4" stroke="#06b6d4" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#mC)" class="fl"/>
+    <text x="152" y="0" class="nd" fill="#22d3ee">Feign RPC</text>
+    <line x1="230" y1="-4" x2="265" y2="-4" stroke="#10b981" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#mG)" class="fl"/>
+    <text x="272" y="0" class="nd" fill="#34d399">服务注册</text>
+    <line x1="350" y1="-4" x2="385" y2="-4" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#mA)" class="fl"/>
+    <text x="392" y="0" class="nd" fill="#fcd34d">分布式事务</text>
+    <line x1="485" y1="-4" x2="520" y2="-4" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <text x="527" y="0" class="nd" fill="#c4b5fd">Agent 上报</text>
+  </g>
+</svg>

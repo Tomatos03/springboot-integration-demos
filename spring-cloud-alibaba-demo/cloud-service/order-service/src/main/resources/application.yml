@@ -1,0 +1,46 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/cloud_demo?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  config:
+    import: nacos:order-service # 不需要文件后缀名称
+  cloud:
+    nacos:
+      server-addr: 127.0.0.1:8848
+      config:
+        file-extension: yaml
+        refresh-enabled: true
+        namespace: public
+    compatibility-verifier:
+      enabled: false
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+seata:
+  enabled: true
+  tx-service-group: cloud_tx_group
+  service:
+    vgroup-mapping:
+      cloud_tx_group: default
+    grouplist:
+      default: 127.0.0.1:8091
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+feign:
+  sentinel:
+    enabled: true
