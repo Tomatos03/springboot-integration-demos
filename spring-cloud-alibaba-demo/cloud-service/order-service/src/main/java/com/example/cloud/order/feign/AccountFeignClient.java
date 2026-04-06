@@ -1,6 +1,7 @@
 package com.example.cloud.order.feign;
 
 import com.example.cloud.order.dto.DeductAccountRequest;
+import com.example.cloud.order.feign.fallback.AccountFeignFallbackFactory;
 import com.example.common.constant.ServiceNameConstants;
 import com.example.common.vo.ResultVO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -10,7 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient(
         name = ServiceNameConstants.ACCOUNT_SERVICE,
         path = "/api/account",
-        fallbackFactory = AccountFeignFallbackFactory.class
+        fallbackFactory = AccountFeignFallbackFactory.class,
+        configuration = {FeignRequestInterceptor.class, FeignResponseInterceptor.class}
 )
 public interface AccountFeignClient {
 

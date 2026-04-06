@@ -36,13 +36,16 @@ spring:
             - Path=/account/**
           filters:
             - StripPrefix=1
+
         - id: order-route
           uri: lb://order-service
           predicates:
             - Path=/order/**
+            - WhitelistPath=/order/api/order/health,/order/api/order/list,/order/api/order/create
           filters:
             - StripPrefix=1
             - RequestTimestamp
+
         - id: storage-route
           uri: lb://storage-service
           predicates:

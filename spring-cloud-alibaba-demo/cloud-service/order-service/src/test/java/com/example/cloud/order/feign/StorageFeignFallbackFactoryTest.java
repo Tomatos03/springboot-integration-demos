@@ -1,6 +1,7 @@
 package com.example.cloud.order.feign;
 
 import com.example.cloud.order.dto.DeductStorageRequest;
+import com.example.cloud.order.feign.fallback.StorageFeignFallbackFactory;
 import com.example.common.vo.ResultVO;
 import org.junit.jupiter.api.Test;
 

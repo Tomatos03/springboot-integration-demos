@@ -39,23 +39,6 @@ spring-cloud-alibaba-demo/
 - 如果你改成 `NACOS_AUTH_ENABLE=true`，Nacos 默认账号密码是 `nacos/nacos`（首次登录建议修改）。
 - Sentinel Dashboard 默认账号密码是 `sentinel/sentinel`。
 
-## 手动启动顺序
-
-1. 启动基础组件（MySQL / Nacos / Seata / Sentinel / SkyWalking）：
-
-```bash
-cd spring-cloud-alibaba-demo/docs/docker
-docker compose --env-file .env -f compose.yml up -d
-```
-
-2. 回到项目根目录，启动业务服务：
-
-```bash
-mvn -pl spring-cloud-alibaba-demo/cloud-service/account-service spring-boot:run
-mvn -pl spring-cloud-alibaba-demo/cloud-service/storage-service spring-boot:run
-mvn -pl spring-cloud-alibaba-demo/cloud-service/order-service spring-boot:run
-mvn -pl spring-cloud-alibaba-demo/alibaba-gateway spring-boot:run
-```
 
 ## Gateway
 
@@ -120,7 +103,158 @@ curl -sS -X POST "http://127.0.0.1:8888/order/api/order/create" \
 
 ---
 
-### 网关异常处理
+### 自定义断言
+
+#### 配置
+
+**1. 创建白名单路径断言类**
+
+```java
+ @Component
+@Slf4j
+public class WhitelistPathRoutePredicateFactory extends AbstractRoutePredicateFactory<WhitelistPathRoutePredicateFactory.Config> {
+
+    public WhitelistPathRoutePredicateFactory() {
+        super(Config.class);
+    }
+
+    @Override
+    public Predicate<ServerWebExchange> apply(Config config) {
+        return new WhitelistPathPredicate(config);
+    }
+
+    // Config类之中的字段名称与当前方法声明的必须一致
+    @Override
+    public List<String> shortcutFieldOrder() {
+        return List.of("whiteList");
+    }
+
+    // 将以逗号分割的参数收集成list
+    @Override
+    public ShortcutType shortcutType() {
+        return ShortcutType.GATHER_LIST;
+    }
+
+    @Setter
+    @Getter
+    public static class Config {
+        private List<String> whiteList;
+    }
+
+    private static class WhitelistPathPredicate implements Predicate<ServerWebExchange> {
+        private final Config config;
+
+        public WhitelistPathPredicate(Config config) {
+            this.config = config;
+        }
+
+        @Override
+        public boolean test(ServerWebExchange exchange) {
+            String path = exchange.getRequest().getURI().getPath();
+            List<String> whiteList = config.getWhiteList();
+            if (whiteList == null || whiteList.isEmpty()) {
+                log.warn("Whitelist is empty, all paths will be allowed");
+                return true;
+            }
+            return whiteList.stream().anyMatch(path::startsWith);
+        }
+    }
+}
+```
+
+位置：`com.example.gateway.predicate.WhitelistPathRoutePredicateFactory`
+
+**2. YAML 配置**
+
+```yaml
+- id: order-route
+  uri: lb://order-service
+  predicates:
+    - Path=/order/**
+    - WhitelistPath=/api/order/health,/api/order/list
+  filters:
+    - StripPrefix=1
+    - RequestTimestamp
+```
+
+配置说明：
+- `WhitelistPath`：指定允许访问的路径白名单，只有匹配的路径才能通过该路由
+- 使用简写格式时，逗号分隔的值会通过 `GATHER_LIST` 模式收集为 List
+
+**配置约定**
+
+1. **断言名称映射**
+
+   - 类名去掉 `RoutePredicateFactory` 后缀
+   - `WhitelistPathRoutePredicateFactory` → `WhitelistPath`
+
+2. **shortcutFieldOrder() 方法**
+
+   - 返回 YAML 简写格式中参数与 Config 属性的映射关系
+   - 例如：`return List.of("whiteList")` 表示 YAML 中第一个参数映射到 Config 的 `whiteList` 属性
+
+3. **shortcutType() 方法**
+
+   返回一个ShortcutType枚举，枚举值参考下表：
+
+   | 枚举值 | 说明 |
+   |--------|------|
+   | `SHORTEST` | 根据shortcutFieldOrder方法声明的字段名称，通过反射将值赋予到Config类对应的成员变量上。如果找不到Config类对应的成员属性就直接跳过 |
+   | `GATHER_LIST` | 要求 shortcutFieldOrder 大小为 1。将所有 value 收集为一个 List，放入 fieldOrder 指定的字段名下 |
+   | `GATHER_LIST_TAIL_FLAG` | 要求 shortcutFieldOrder 大小为 2。最后一个 value 如果是 true/false/null，则作为布尔标志分离；其余 value 收集为 List |
+
+4. **YAML 配置格式**
+
+   **简写格式**（逗号分隔，默认使用逗号分割）
+
+   ```yaml
+   - WhitelistPath=/api/order/health,/api/order/list
+   ```
+   - 需要配合 `shortcutType() = GATHER_LIST` 使用
+   - Gateway 将逗号分隔的值收集为 List，传入 Config 的 `whiteList` 属性
+
+   **完整格式**（YAML List）
+
+   ```yaml
+   - name: WhitelistPath
+     args:
+       whiteList:
+         - /api/order/health
+         - /api/order/list
+   ```
+   - Gateway 将 YAML List 直接映射为 `List<String>` 传入
+
+   > [!NOTE]
+   >
+   > 完整形式声明，不需要重写shortcutFieldOrder(), 如果使用简写形式就一定要
+
+#### 验证
+
+**验证白名单路径**
+
+允许的路径可以直接访问：
+
+```bash
+curl -sS "http://127.0.0.1:8888/order/api/order/health"
+```
+
+预期：正常返回
+
+**验证非白名单路径**
+
+非白名单路径会被拒绝（404 或无匹配路由）：
+
+```bash
+curl -sS "http://127.0.0.1:8888/order/api/order/create" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"u1001","commodityCode":"C1001","count":1,"money":10.00}'
+```
+
+预期：返回 404 或找不到路由
+
+---
+
+### 网关异常处理器
 
 #### 配置
 
@@ -345,6 +479,67 @@ curl -sS -i "http://127.0.0.1:8888/account/api/account/health"
 
 ---
 
+### 全局CORS配置
+
+#### 配置
+
+```java
+@Configuration
+public class CorsConfig {
+    @Bean
+    public CorsWebFilter corsWebFilter() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+        config.addAllowedOriginPattern("*");
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
+        config.setMaxAge(3600L);
+        source.registerCorsConfiguration("/**", config);
+        return new CorsWebFilter(source);
+    }
+}
+```
+
+配置说明：
+- `setAllowCredentials(true)`：允许携带凭证（如 cookies）
+- `addAllowedOriginPattern("*")`：允许所有来源（使用 pattern 而非 `*`，以支持 credentials）
+- `addAllowedHeader("*")`：允许所有请求头
+- `addAllowedMethod("*")`：允许所有 HTTP 方法
+- `setMaxAge(3600L)`：预检请求缓存时间为 1 小时
+
+#### 验证
+
+**验证全局 CORS 配置**
+
+发送 OPTIONS 预检请求：
+
+```bash
+curl -sS -i -X OPTIONS "http://127.0.0.1:8888/account/api/account/health" \
+  -H "Origin: http://example.com" \
+  -H "Access-Control-Request-Method: GET" \
+  -H "Access-Control-Request-Headers: Content-Type"
+```
+
+预期：响应 header 中包含：
+```
+Access-Control-Allow-Origin: http://example.com
+Access-Control-Allow-Methods: GET,POST,PUT,DELETE,OPTIONS
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Max-Age: 3600
+```
+
+**验证跨域请求**
+
+```bash
+curl -sS -i "http://127.0.0.1:8888/account/api/account/health" \
+  -H "Origin: http://example.com"
+```
+
+预期：响应 header 中包含 `Access-Control-Allow-Origin` 字段。
+
+---
+
 ## Seata
 
 ### 跨服务回滚
@@ -448,6 +643,8 @@ public class OrderApplication {
     }
 }
 ```
+
+完成上述步骤的配置之后， 服务启动的时候会自动注册到 Nacos 注册中心.
 
 #### 验证
 
@@ -650,7 +847,7 @@ public class AccountFeignFallbackFactory implements FallbackFactory<AccountFeign
 }
 ```
 
-位置：`com.example.cloud.order.feign.AccountFeignFallbackFactory`
+位置：`com.example.cloud.order.feign.fallback.AccountFeignFallbackFactory`
 
 **4.** 在 FeignClient 接口添加 `fallbackFactory` 属性
 
@@ -691,3 +888,296 @@ curl -sS -X POST "http://127.0.0.1:8888/order/api/order/create" \
 ```
 
 预期：返回降级响应，`message` 包含 `account-service degraded, request rejected`
+
+### 请求拦截器
+
+#### 单个 Feign 客户端
+
+**配置**
+
+**1.** 创建 `RequestInterceptor` 实现类
+
+```java
+@Slf4j
+public class FeignRequestInterceptor implements RequestInterceptor {
+
+    @Override
+    public void apply(RequestTemplate template) {
+        String requestId = UUID.randomUUID().toString();
+        template.header("X-Request-Id", requestId);
+        template.header("X-From-Service", "order-service");
+        
+        log.info("Feign request intercepted, method={}, url={}, requestId={}", 
+                template.httpMethod(), template.url(), requestId);
+    }
+}
+```
+
+**2.** 在 `@FeignClient` 中配置 `configuration`
+
+```java
+@FeignClient(
+    name = "account-service",
+    path = "/api/account",
+    fallbackFactory = AccountFeignFallbackFactory.class,
+    configuration = FeignRequestInterceptor.class
+)
+public interface AccountFeignClient {
+
+    @PostMapping("/deduct")
+    ResultVO<Void> deduct(@RequestBody DeductAccountRequest request);
+}
+```
+
+配置说明：
+- `RequestInterceptor` 用于在 Feign 发送请求前拦截并修改请求
+- 常用场景：添加统一请求头（如认证信息、追踪 ID）、日志记录、请求参数加密等
+
+这里也可以通过配置 `application.yml` 来控制是否启用某些请求拦截器：
+
+```yaml
+spring:
+  cloud:
+    openfeign:
+      client:
+        config:
+          account-service:
+            request-interceptors:
+              - com.example.cloud.order.feign.FeignRequestInterceptor
+```
+
+**验证**
+
+发送请求，验证请求头传递到下游服务：
+
+```bash
+curl -sS -X POST "http://127.0.0.1:8888/order/api/order/create" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"u1001","commodityCode":"C1001","count":1,"money":10.00}'
+```
+
+在 account-service 日志中查看是否接收到 `X-Request-Id` 和 `X-From-Service` 请求头。
+
+#### 全局生效
+
+**配置**
+
+通过 `@Component` 注解注册为 Bean，对所有 Feign 客户端生效：
+
+```java
+@Slf4j
+@Component
+public class GlobalFeignRequestInterceptor implements RequestInterceptor {
+
+    @Override
+    public void apply(RequestTemplate template) {
+        template.header("X-TraceId", UUID.randomUUID().toString());
+        log.info("[Global] Feign request intercepted, service={}, method={}, url={}, X-TraceId={}",
+                template.feignTarget().name(),
+                template.request().httpMethod(),
+                template.url(),
+                template.headers().get("X-TraceId"));
+    }
+}
+```
+
+位置：`com.example.cloud.order.feign.GlobalFeignRequestInterceptor`
+
+> [!NOTE]
+> 如果同时使用 `@Component` 全局注册和 `@FeignClient.configuration` 单个客户端配置，**两者都会生效**。
+
+**验证**
+
+发送请求，验证请求头传递到下游服务：
+
+```bash
+curl -sS -X POST "http://127.0.0.1:8888/order/api/order/create" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"u1001","commodityCode":"C1001","count":1,"money":10.00}'
+```
+
+预期：在 order-service 日志中看到类似：
+```
+[Global] Feign request intercepted, service=account-service, method=POST, url=/deduct, X-TraceId=[...]
+```
+
+### 响应拦截器
+
+#### 单个 Feign 客户端
+
+**配置**
+
+**1.** 创建 `ResponseInterceptor` 实现类
+
+```java
+@Slf4j
+public class FeignResponseInterceptor implements ResponseInterceptor {
+
+    @Override
+    public Object intercept(InvocationContext invocationContext, Chain chain) throws Exception {
+        Response response = invocationContext.response();
+        Request request = response.request();
+        Object result = chain.next(invocationContext);
+        log.info("Feign response intercepted, method={}, url={}, status={}, result={}",
+                request.httpMethod(), request.url(), response.status(), result);
+        return result;
+    }
+}
+```
+
+位置：`com.example.cloud.order.feign.FeignResponseInterceptor`
+
+**2.** 在 `@FeignClient` 中配置 `configuration`
+
+```java
+@FeignClient(
+        name = "account-service",
+        path = "/api/account",
+        fallbackFactory = AccountFeignFallbackFactory.class,
+        configuration = {FeignRequestInterceptor.class, FeignResponseInterceptor.class}
+)
+public interface AccountFeignClient {
+    // ...
+}
+```
+
+这里也可以通过配置 `application.yml` 来控制是否启用某个响应拦截器：
+
+```yaml
+spring:
+  cloud:
+    openfeign:
+      client:
+        config:
+          account-service:
+            response-interceptors: com.example.cloud.order.feign.FeignResponseInterceptor # 仅能添加一个响应拦截器
+```
+
+**验证**
+
+发送请求，查看日志输出：
+
+```bash
+curl -sS -X POST "http://127.0.0.1:8888/order/api/order/create" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"u1001","commodityCode":"C1001","count":1,"money":10.00}'
+```
+
+预期：在 order-service 日志中看到类似：
+```
+Feign response intercepted, method=POST, url=/deduct, status=200, result=...
+```
+
+#### 全局生效
+
+**配置**
+
+通过 `@Component` 注解注册为 Bean，对所有 Feign 客户端生效：
+
+```java
+@Slf4j
+@Component
+public class GlobalFeignResponseInterceptor implements ResponseInterceptor {
+
+    @Override
+    public Object intercept(InvocationContext invocationContext, Chain chain) throws Exception {
+        Response response = invocationContext.response();
+        Request request = response.request();
+        Object result = chain.next(invocationContext);
+        log.info("[Global] Feign response intercepted, method={}, url={}, status={}, result={}",
+                request.httpMethod(), request.url(), response.status(), result);
+        return result;
+    }
+}
+```
+
+位置：`com.example.cloud.order.feign.GlobalFeignResponseInterceptor`
+
+> [!NOTE]
+> 如果同时使用 `@Component` 全局注册和 `@FeignClient.configuration` 单个客户端配置，**只有单个客户端配置的拦截器生效，全局拦截器对该客户端不生效**。
+
+**验证**
+
+发送请求，查看日志输出：
+
+```bash
+curl -sS -X POST "http://127.0.0.1:8888/order/api/order/create" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"u1001","commodityCode":"C1001","count":1,"money":10.00}'
+```
+
+预期：在 order-service 日志中看到类似：
+```
+[Global] Feign response intercepted, method=POST, url=/deduct, status=200, result=...
+```
+
+### 超时控制
+
+#### 配置
+
+**YAML 配置**
+
+```yaml
+feign:
+  client:
+    config:
+      account-service:
+        connect-timeout: 3000
+        read-timeout: 5000
+      order-service:
+        connect-timeout: 3000
+        read-timeout: 5000
+      storage-service:
+        connect-timeout: 3000
+        read-timeout: 5000
+```
+
+配置说明：
+- `connect-timeout`：连接超时时间（毫秒），建立 TCP 连接的时间
+- `read-timeout`：读取超时时间（毫秒），从发送请求到接收响应的时间
+
+#### 验证
+
+将`account-service`服务暂停，然后调用下面的请求：
+
+```bash
+curl -sS -X POST "http://127.0.0.1:8888/order/api/order/create" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"u1001","commodityCode":"C1001","count":1,"money":10.00}'
+```
+
+预期：等待5秒之后，发生读取超时.
+
+### 重试机制
+
+#### 配置
+
+```java
+@Configuration
+public class FeignRetryConfig {
+    @Bean
+    public Retryer retryer() {
+        // public Default(long period, long maxPeriod, int maxAttempts)
+        return new Retryer.Default(100, 1000, 3);
+    }
+}
+```
+
+配置说明：
+- `period`: 重试间隔基数（100ms）
+- `maxPeriod`: 最大重试间隔（1000ms = 1s）
+- `maxAttempts`: 最大尝试次数（含首次），设为 3
+
+位置：`com.example.cloud.order.config.FeignRetryConfig`
+
+#### 验证
+
+停止 account-service，发起请求，然后在快速启动服务，验证重试机制：
+
+```bash
+curl -sS -X POST "http://127.0.0.1:8888/order/api/order/create" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"u1001","commodityCode":"C1001","count":1,"money":10.00}'
+```
+
+在 order-service 日志中查看重试日志，确认重试次数符合配置。

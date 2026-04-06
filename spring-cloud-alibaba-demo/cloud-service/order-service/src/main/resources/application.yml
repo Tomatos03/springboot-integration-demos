@@ -18,8 +18,15 @@ spring:
         file-extension: yaml
         refresh-enabled: true
         namespace: public
-    compatibility-verifier:
-      enabled: false
+    openfeign:
+      client:
+        config:
+          account-service:
+            connect-timeout: 3000
+            read-timeout: 5000
+          storage-service:
+            connect-timeout: 3000
+            read-timeout: 5000
 
 mybatis-plus:
   configuration:
