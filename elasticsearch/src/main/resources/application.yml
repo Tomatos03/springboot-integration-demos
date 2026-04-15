@@ -1,0 +1,14 @@
+server:
+  port: 8083
+
+es:
+  host: localhost
+  port: 9200
+  scheme: http
+  username:
+  password:
+  index: products
+
+logging:
+  level:
+    com.demo.elasticsearch: info
