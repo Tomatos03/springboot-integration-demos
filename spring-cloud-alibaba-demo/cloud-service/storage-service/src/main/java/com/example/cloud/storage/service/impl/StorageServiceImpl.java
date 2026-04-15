@@ -1,10 +1,10 @@
 package com.example.cloud.storage.service.impl;
 
-import com.example.cloud.storage.dto.DeductStorageRequest;
 import com.example.cloud.storage.dto.StorageResponse;
 import com.example.cloud.storage.entity.StorageDO;
 import com.example.cloud.storage.mapper.StorageMapper;
 import com.example.cloud.storage.service.StorageService;
+import com.example.common.dto.DeductStorageRequest;
 import com.example.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

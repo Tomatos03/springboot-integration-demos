@@ -1,6 +1,6 @@
 package com.example.cloud.account.service.impl;
 
-import com.example.cloud.account.dto.DeductAccountRequest;
+import com.example.common.dto.DeductAccountRequest;
 import com.example.cloud.account.entity.AccountDO;
 import com.example.cloud.account.mapper.AccountMapper;
 import com.example.common.exception.BusinessException;

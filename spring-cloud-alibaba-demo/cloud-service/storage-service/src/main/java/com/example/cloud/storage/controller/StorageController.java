@@ -1,8 +1,8 @@
 package com.example.cloud.storage.controller;
 
-import com.example.cloud.storage.dto.DeductStorageRequest;
 import com.example.cloud.storage.dto.StorageResponse;
 import com.example.cloud.storage.service.StorageService;
+import com.example.common.dto.DeductStorageRequest;
 import com.example.common.vo.ResultVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

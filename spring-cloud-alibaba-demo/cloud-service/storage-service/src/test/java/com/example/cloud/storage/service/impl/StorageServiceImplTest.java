@@ -1,6 +1,6 @@
 package com.example.cloud.storage.service.impl;
 
-import com.example.cloud.storage.dto.DeductStorageRequest;
+import com.example.common.dto.DeductStorageRequest;
 import com.example.cloud.storage.entity.StorageDO;
 import com.example.cloud.storage.mapper.StorageMapper;
 import com.example.common.exception.BusinessException;

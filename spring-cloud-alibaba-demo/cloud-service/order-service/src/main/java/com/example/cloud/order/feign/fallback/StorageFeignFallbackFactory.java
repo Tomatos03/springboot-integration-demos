@@ -1,6 +1,6 @@
 package com.example.cloud.order.feign.fallback;
 
-import com.example.cloud.order.dto.DeductStorageRequest;
+import com.example.common.dto.DeductStorageRequest;
 import com.example.cloud.order.feign.StorageFeignClient;
 import com.example.common.vo.ResultVO;
 import lombok.extern.slf4j.Slf4j;

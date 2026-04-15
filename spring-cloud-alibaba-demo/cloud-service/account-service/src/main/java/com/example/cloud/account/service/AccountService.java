@@ -1,7 +1,7 @@
 package com.example.cloud.account.service;
 
 import com.example.cloud.account.dto.AccountResponse;
-import com.example.cloud.account.dto.DeductAccountRequest;
+import com.example.common.dto.DeductAccountRequest;
 
 import java.util.List;
 

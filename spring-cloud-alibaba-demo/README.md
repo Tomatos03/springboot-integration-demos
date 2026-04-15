@@ -595,8 +595,7 @@ curl -sS "http://127.0.0.1:8888/order/api/order/list"
 
 ### Fallback 降级
 
-> [!NOTE]
-> OpenFeign 整合 Sentinel 实现服务降级，详细参考 [OpenFeign - Fallback 降级配置](#fallback-降级配置)
+OpenFeign 整合 Sentinel 实现服务降级，详细参考 [OpenFeign - Fallback 降级配置](#fallback-降级配置)
 
 ---
 
@@ -1181,3 +1180,225 @@ curl -sS -X POST "http://127.0.0.1:8888/order/api/order/create" \
 ```
 
 在 order-service 日志中查看重试日志，确认重试次数符合配置。
+
+## Dubbo
+
+Dubbo 是阿里巴巴开源的高性能 RPC 框架，与 Spring Cloud 生态无缝集成。本示例在保留 Feign 的同时增加 Dubbo 作为并行学习路径。
+
+| 特性 | Feign (HTTP) | Dubbo (RPC) |
+|------|--------------|-------------|
+| 通信协议 | HTTP/1.1 | TCP/Hessian |
+| 序列化 | JSON | Hessian |
+| 性能 | 较低 | 较高 |
+| 适用场景 | HTTP API | 内部服务调用 |
+
+> [!note]
+> RPC 是一套远程调用解决方案规范，并非具体协议
+
+---
+
+### 提供者声明
+
+**配置**
+
+在服务中添加依赖：
+
+```xml
+<dependency>
+    <groupId>org.apache.dubbo</groupId>
+    <artifactId>dubbo-spring-boot-starter</artifactId>
+    <version>[last-version]</version>
+</dependency>
+<!-- 使用nacos作为注册中心时导入 -->
+<dependency>
+    <groupId>org.apache.dubbo</groupId>
+    <artifactId>dubbo-nacos-spring-boot-starter</artifactId>
+</dependency>
+```
+
+**2.** 服务配置：在各服务的 `application.yml` 中配置
+
+```yaml
+dubbo:
+  application:
+    name: account-service
+  protocol:
+    port: 20881
+  registry:
+    address: nacos://127.0.0.1:8848 // 使用nacos作为注册中心
+```
+
+
+
+**内置协议**
+
+| 协议 | 配置值 | 说明 | 默认端口 |
+|------|-------|------|----------|
+| **Dubbo** | `dubbo` | 默认协议，基于 TCP 的私有协议 | 最高性能 |
+| **Triple** | `tri` 或 `triple` | 基于 HTTP/1、HTTP/2，兼容 gRPC | 网关友好，支持流 |
+| **HTTP** | `http` | 基于 HTTP 的私有协议 | Spring HTTP |
+| **REST** | `rest` | REST 风格 HTTP 服务 | 标准 REST API |
+
+配置说明：
+- `dubbo` 为默认协议，可省略不配
+- `tri` 需显式配置 `name: tri`
+
+**定义公共API**
+
+在 `alibaba-common` 中定义接口：
+
+```java
+package com.example.common.dubbo;
+
+public interface DubboAccountService {
+    boolean deduct(DeductAccountRequest request);
+}
+```
+
+```java
+package com.example.common.dubbo;
+
+public interface DubboStorageService {
+    boolean deduct(DeductStorageRequest request);
+}
+```
+
+> [!NOTE]
+>
+> 服务端和消费端可能处于不同的模块，这个时候需要定义好公共api
+
+**Provider 实现**
+
+```java
+@DubboService
+@RequiredArgsConstructor
+public class DubboStorageServiceImpl implements DubboStorageService {
+
+    private final StorageService storageService;
+
+    @Override
+    public boolean deduct(DeductStorageRequest request) {
+        storageService.deduct(request);
+        return true;
+    }
+}
+```
+
+---
+
+**验证**
+
+通过订单创建请求验证提供者服务已正确注册：
+
+查看 Nacos 控制台，确认服务已注册 Dubbo 协议信息。
+
+---
+
+### 消费者声明
+
+**配置**
+
+配置和消费者配置一致
+
+**Consumer 实现**
+
+```java
+@Component
+@ConditionalOnProperty(name = "remote.call-mode", havingValue = "dubbo")
+public class DubboOrderService {
+
+    @DubboReference // 在需要的地方使用@DubboReference注解
+    private DubboAccountService dubboAccountService;
+
+    @DubboReference
+    private DubboStorageService dubboStorageService;
+
+    public ResultVO<Void> deductStorage(String commodityCode, Integer count) {
+        DeductStorageRequest request = new DeductStorageRequest(commodityCode, count);
+        boolean success = dubboStorageService.deduct(request);
+        return success ? ResultVO.success() : ResultVO.fail("库存扣减失败");
+    }
+
+    public ResultVO<Void> deductAccount(String userId, BigDecimal money) {
+        DeductAccountRequest request = new DeductAccountRequest(userId, money);
+        boolean success = dubboAccountService.deduct(request);
+        return success ? ResultVO.success() : ResultVO.fail("账户扣减失败");
+    }
+}
+```
+
+**验证**
+
+通过订单创建请求验证消费者调用：
+
+```bash
+curl -sS -X POST "http://127.0.0.1:8888/order/api/order/create" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"u1001","commodityCode":"C1001","count":1,"money":10.00}'
+```
+
+预期：返回成功，订单/库存/余额数据正确变化。
+
+查看 Nacos 控制台，确认消费者已连接 Dubbo 服务。
+
+---
+
+### 拦截器
+
+Dubbo 提供了 Filter 机制，允许在请求、响应、异常等阶段进行拦截和处理。本示例实现了三个核心 Filter：
+
+**声明 Filter**
+
+Filter 需要实现 `org.apache.dubbo.rpc.Filter` 接口。使用 `@Activate` 注解标注 Filter 的作用范围（`group = "consumer"` 表示消费端生效，`group = "provider"` 表示提供端生效）。
+
+- **消费端请求拦截器**：[`DubboConsumerRequestFilter`](alibaba-common/src/main/java/com/example/common/dubbo/filter/DubboConsumerRequestFilter.java) 在消费端（调用者）拦截请求，记录请求日志并添加链路追踪 ID。
+- **提供端响应拦截器**：[`DubboProviderResponseFilter`](alibaba-common/src/main/java/com/example/common/dubbo/filter/DubboProviderResponseFilter.java) 在提供端（服务提供者）拦截响应，记录响应日志和耗时。
+- **异常处理过滤器**：[`DubboExceptionFilter`](alibaba-common/src/main/java/com/example/common/dubbo/filter/DubboExceptionFilter.java) 在提供端捕获异常，记录详细的异常日志。
+
+> [!TIP]
+>
+> Dubbo在提供了`org.apache.dubbo.common.constants.CommonConstants`常量，使用内置静态常量可以避免手动书写错误.
+
+**注册Filter**
+
+Filter 通过 Dubbo 的 SPI（Service Provider Interface）机制自动加载，无需在 `application.yml` 中额外配置。在 `META-INF/dubbo/org.apache.dubbo.rpc.Filter` 文件中注册 Filter 的全限定类名：
+
+```properties
+# File: alibaba-common/src/main/resources/META-INF/dubbo/org.apache.dubbo.rpc.Filter
+dubboConsumerRequestFilter=com.example.common.dubbo.filter.DubboConsumerRequestFilter
+dubboProviderResponseFilter=com.example.common.dubbo.filter.DubboProviderResponseFilter
+dubboExceptionFilter=com.example.common.dubbo.filter.DubboExceptionFilter
+```
+
+Dubbo 启动时会自动扫描 `META-INF/dubbo/` 下的配置文件，加载所有已注册的 Filter，无需手动操作。
+
+> [!TIP]
+>
+> 上面仅演示了通过Dubbo SPI机制注册Filter，如果使用了Spring框架，也可以直接通过`@Component`注解直接注册
+
+#### **验证**
+
+通过创建订单请求，查看日志输出：
+
+```bash
+curl -sS -X POST "http://127.0.0.1:8888/order/api/order/create" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"u1001","commodityCode":"C1001","count":1,"money":10.00}'
+```
+
+预期查看到以下日志链路：
+
+```
+[Dubbo Filter] REQUEST -> DubboStorageService.deduct() | TraceId: xxx | Params: {...}
+[Dubbo Filter] REQUEST -> DubboAccountService.deduct() | TraceId: xxx | Params: {...}
+[Dubbo Filter] RESPONSE <- DubboStorageService.deduct() | TraceId: xxx | Cost: 25ms | Result: success
+[Dubbo Filter] RESPONSE <- DubboAccountService.deduct() | TraceId: xxx | Cost: 30ms | Result: success
+```
+
+---
+
+**注意事项**
+
+1. **序列化**：Dubbo 使用 Hessian 序列化，需确保 DTO 实现 `Serializable`
+2. **端口冲突**：确保 Dubbo 端口（20881/20882/20880）未被占用
+3. **注册中心**：本示例复用 Nacos，也可使用 ZooKeeper

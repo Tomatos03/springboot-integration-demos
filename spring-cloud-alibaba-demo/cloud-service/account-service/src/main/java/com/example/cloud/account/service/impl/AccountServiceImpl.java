@@ -1,12 +1,13 @@
 package com.example.cloud.account.service.impl;
 
 import com.example.cloud.account.dto.AccountResponse;
-import com.example.cloud.account.dto.DeductAccountRequest;
 import com.example.cloud.account.entity.AccountDO;
 import com.example.cloud.account.mapper.AccountMapper;
 import com.example.cloud.account.service.AccountService;
+import com.example.common.dto.DeductAccountRequest;
 import com.example.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import org.apache.dubbo.config.annotation.DubboService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

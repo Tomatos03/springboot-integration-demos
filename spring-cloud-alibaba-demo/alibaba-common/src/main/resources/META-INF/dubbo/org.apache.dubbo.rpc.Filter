@@ -1,0 +1,9 @@
+# 通过 Dubbo Filter SPI 注册Filter
+# 文件位置: alibaba-common/src/main/resources/META-INF/dubbo/org.apache.dubbo.rpc.Filter
+# 描述: 注册自定义的 Dubbo Filter，Dubbo 启动时会自动扫描并加载这些 Filter
+# 消费端请求拦截器 - 记录请求日志并生成链路追踪 ID
+#dubboConsumerRequestFilter=com.example.common.dubbo.filter.DubboConsumerRequestFilter
+# 提供端响应拦截器 - 记录响应日志和耗时
+#dubboProviderResponseFilter=com.example.common.dubbo.filter.DubboProviderResponseFilter
+# 异常处理过滤器 - 捕获并记录异常日志
+#dubboExceptionFilter=com.example.common.dubbo.filter.DubboExceptionFilter

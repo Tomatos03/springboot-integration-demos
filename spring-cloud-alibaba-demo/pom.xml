@@ -23,6 +23,7 @@
 
     <properties>
         <skywalking.apm.version>8.16.0</skywalking.apm.version>
+        <dubbo.version>3.2.16</dubbo.version>
     </properties>
 
     <dependencyManagement>
@@ -39,6 +40,14 @@
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
                 <version>2025.0.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-bom</artifactId>
+                <version>${dubbo.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
