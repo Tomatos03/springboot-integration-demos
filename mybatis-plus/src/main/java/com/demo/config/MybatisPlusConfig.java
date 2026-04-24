@@ -17,12 +17,8 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @MapperScan("com.demo.mapper")
-public class MybatisConfig {
-
-    /**
-     * 配置MyBatis-Plus拦截器
-     * 包括分页插件和乐观锁插件
-     */
+public class MybatisPlusConfig {
+    
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();

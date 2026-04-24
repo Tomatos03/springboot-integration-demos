@@ -1,7 +1,9 @@
 package com.demo.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.demo.enums.UserStatus;
 import lombok.Data;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -42,6 +44,18 @@ public class User {
      */
     @TableField("age")
     private Integer age;
+    
+    /**
+     * 用户状态
+     * 
+     * 四层转换流程：
+     * 1. 入参转换：通过 StringToUserStatusConverter 将 String 转换为 UserStatus
+     * 2. 存储转换：MyBatis-Plus 自动将 UserStatus 转换为 code (1,2,3) 存储到数据库
+     * 3. 加载转换：MyBatis-Plus 自动将数据库的 code (1,2,3) 转换为 UserStatus
+     * 4. 返回序列化：通过 @JsonValue 将 UserStatus 序列化为 description ("活跃","非活跃","被封禁")
+     */
+    @TableField("status")
+    private UserStatus status;
     
     /**
      * 创建时间（自动填充）

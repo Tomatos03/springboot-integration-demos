@@ -8,6 +8,7 @@ CREATE TABLE sys_user (
     username VARCHAR(50) NOT NULL COMMENT '用户名',
     email VARCHAR(100) COMMENT '邮箱',
     age INT COMMENT '年龄',
+    status INT COMMENT '用户状态（1-活跃，2-非活跃，3-被封禁）',
     version INT DEFAULT 0 COMMENT '乐观锁版本号',
     create_time DATETIME COMMENT '创建时间',
     update_time DATETIME COMMENT '更新时间',
