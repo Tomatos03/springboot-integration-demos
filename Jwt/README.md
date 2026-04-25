@@ -129,22 +129,25 @@ Jwt的工作流程包含两个部分：
 - `jjwt-impl`：核心实现（运行期需要）。
 - `jjwt-jackson`：基于 Jackson 的 JSON 序列化支持（运行期需要）。
 
-### 核心类实现（TokenManager）
+## Jwt封装工具类
 
-具体实现可参考：`Jwt/src/main/java/org/demo/manager/jwt/TokenManager.java`
+本项目已封装 JWT 相关功能，提供统一、易用的接口，便于在 Spring Boot 项目中直接集成和使用。
 
-该类是 JWT 的统一入口，主要提供 3 个方法：
+**相关类:**
 
-- `generatorToken(Map<String, Object> payload)`：生成 Token，内部调用 `JwtUtil.createJws(...)`，并使用 `TokenProperties` 中的 `secret` 与 `expirationSeconds`。
-- `validateToken(String token)`：校验 Token 是否有效，内部通过 `parseToken(token)` 完成校验，捕获异常后返回 `false`。
-- `parseToken(String token)`：解析并返回 `Claims`，用于读取 `userId` 等业务字段。
+- [TokenManager](./src/main/java/org/demo/manager/jwt/TokenManager.java)  
+  主要职责：JWT 的生成、校验、解析的统一入口。  
+  主要方法：`generateToken`、`validateToken`、`parseToken`
 
-相关配置类：`Jwt/src/main/java/org/demo/manager/jwt/TokenProperties.java`
+- [TokenProperties](./src/main/java/org/demo/manager/jwt/TokenProperties.java)  
+  主要职责：JWT 相关配置的载体，自动绑定 application.yml 配置。参考application.yml配置如下：
+    ```yaml
+    # application.yml
+    jwt:
+    token:
+        secret: your-base64-secret # JWT 签名密钥，建议使用 base64 编码字符串
+        expiration-seconds: 86400 # Token有效期，单位秒（如 24 小时）
+    ```
 
-```yaml
-# application.yml
-jwt:
-  token:
-    secret: your-base64-secret
-    expiration-seconds: 86400
-```
+- [JwtUtil](./src/main/java/org/demo/manager/jwt/JwtUtil.java)  
+  主要职责：底层 JWT 生成与解析的工具方法，供 TokenManager 调用。
