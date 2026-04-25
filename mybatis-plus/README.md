@@ -161,7 +161,7 @@ user.setUsername("张三");
 userService.save(user);
 ```
 
-## 枚举类型配置
+## 枚举映射配置
 
 MyBatis-Plus 提供了完整的枚举支持，包括存储、加载、序列化等方面的配置。
 
@@ -193,6 +193,72 @@ MyBatis-Plus 会自动处理以下转换：
 | **存储转换** | MyBatis-Plus 使用 `@EnumValue` 的值存储到数据库（如 1, 2, 3） |
 | **加载转换** | MyBatis-Plus 从数据库读取值（1, 2, 3），自动转换为对应的 `UserStatus` 枚举 |
 | **响应序列化** | 使用 `@JsonValue` 将枚举序列化为 JSON（如 "active", "inactive", "block"） |
+
+## 逻辑删除
+
+逻辑删除是指在删除数据时，并不真正从数据库中删除记录，而是通过标记一个删除标志字段（如 `deleted` 字段）来表示该条记录已被删除。这样做的好处是：数据可以被恢复、保留完整的数据审计日志、避免外键关联被破坏。与之相对的是物理删除，即直接从数据库中删除记录，这是一个不可逆的操作。逻辑删除特别适用于需要数据追溯、合规审计、或频繁需要恢复数据的业务场景。
+
+Mybatis-Plus之中有如下两种方式来实现逻辑删除：
+
+方式一： **在实体类中添加逻辑删除字段**
+
+使用 `@TableLogic` 注解标记逻辑删除字段。查看完整示例：[User.java#L73-77](./src/main/java/com/demo/entity/User.java#L73-77)
+
+```java
+/**
+ * 逻辑删除字段（0-未删除，1-已删除）
+ */
+@TableLogic(value = "0", delval = "1")
+@TableField("deleted")
+private Integer deleted;
+```
+
+> [!NOTE]
+> 当前demo使用这种方式配置逻辑删除
+
+方式二： **在 `application.yml` 中配置逻辑删除**
+
+```yaml
+mybatis-plus:
+  global-config:
+    db-config:
+      # 逻辑删除字段名
+      logic-delete-field: deleted
+      # 逻辑删除值（标记为已删除）
+      logic-delete-value: 1
+      # 逻辑不删除值（标记为未删除）
+      logic-not-delete-value: 0
+```
+
+**逻辑删除的常见操作**
+
+```java
+// 删除操作（逻辑删除）
+// 执行后，数据库中 deleted 字段会被更新为 1，但数据记录仍然存在
+userService.removeById(1L);
+
+// 查询操作（自动过滤已删除数据）
+// MyBatis-Plus 会自动在 WHERE 条件中加入 deleted = 0 的过滤
+List<User> users = userService.list();
+
+// 条件查询（自动过滤已删除数据）
+LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+wrapper.eq(User::getUsername, "admin");
+List<User> users = userService.list(wrapper);
+// 实际执行的 SQL: SELECT * FROM sys_user WHERE deleted = 0 AND username = 'admin'
+
+// 恢复操作（更新逻辑删除字段为 0）
+User user = new User();
+user.setId(1L);
+user.setDeleted(0);
+userService.updateById(user);
+
+// 查询包括已删除的数据（需要显式指定）
+LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+wrapper.eq(User::getUsername, "admin");
+wrapper.last("and deleted = 1"); // 显式查询已删除数据
+List<User> deletedUsers = userService.list(wrapper);
+```
 
 ## 条件构造器
 

@@ -25,6 +25,10 @@
             <result column="role_deleted" property="deleted"/>
         </collection>
     </resultMap>
+    <select id="getAll" resultMap="BaseResultMap">
+        SELECT id, username, email, age, create_time, update_time, version, deleted
+        FROM sys_user
+    </select>
 
     <!-- 自定义查询：根据用户名模糊查询 -->
     <select id="selectByUsernameLike" resultMap="BaseResultMap">

@@ -235,4 +235,6 @@ class EnumConversionTest {
         System.out.println("4️⃣  序列化转换: UserStatus.ACTIVE → JSON \"活跃\"");
         System.out.println("=".repeat(70));
     }
+
+
 }

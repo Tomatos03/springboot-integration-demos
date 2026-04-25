@@ -42,7 +42,7 @@ mybatis-plus:
     # 开启驼峰命名转换
     map-underscore-to-camel-case: true
     # 日志实现
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     db-config:
       # 主键类型（AUTO-数据库自增，ASSIGN_ID-雪花算法）

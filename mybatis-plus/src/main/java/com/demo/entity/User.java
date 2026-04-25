@@ -79,7 +79,7 @@ public class User {
     /**
      * 逻辑删除字段（0-未删除，1-已删除）
      */
-    @TableLogic
+    @TableLogic(value = "0", delval = "1")
     @TableField("deleted")
     private Integer deleted;
 

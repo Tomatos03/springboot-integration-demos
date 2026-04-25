@@ -37,18 +37,10 @@ public interface UserMapper extends BaseMapper<User> {
     IPage<User> selectPageByAgeRange(Page<User> page, 
                                      @Param("minAge") Integer minAge, 
                                      @Param("maxAge") Integer maxAge);
-    
-    /**
-     * 自定义统计查询：统计指定年龄范围的用户数量
-     * 
-     * @param minAge 最小年龄
-     * @param maxAge 最大年龄
-     * @return 用户数量
-     */
-    Integer countByAgeRange(@Param("minAge") Integer minAge, 
-                           @Param("maxAge") Integer maxAge);
 
     List<User> selectUsersWithRoles();
 
     User selectUserWithRolesById(@Param("id") Long id);
+
+    List<User> getAll();
 }

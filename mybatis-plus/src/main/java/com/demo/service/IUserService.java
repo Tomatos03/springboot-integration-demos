@@ -1,9 +1,11 @@
 package com.demo.service;
 
+import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.demo.entity.User;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -33,16 +35,7 @@ public interface IUserService extends IService<User> {
      * @return 分页结果
      */
     IPage<User> getUsersByAgeRange(Page<User> page, Integer minAge, Integer maxAge);
-    
-    /**
-     * 统计指定年龄范围的用户数量
-     * 
-     * @param minAge 最小年龄
-     * @param maxAge 最大年龄
-     * @return 用户数量
-     */
-    Integer countByAgeRange(Integer minAge, Integer maxAge);
-    
+
     /**
      * 根据ID查询用户
      * 
@@ -50,7 +43,7 @@ public interface IUserService extends IService<User> {
      * @return 用户信息
      */
     User getUserById(Long id);
-    
+
     /**
      * 保存用户
      * 
@@ -119,4 +112,6 @@ public interface IUserService extends IService<User> {
     boolean updateByWrapper(Long id, String email, Integer age);
 
     boolean updateByLambdaWrapper(Long id, String email, Integer age);
+
+    List<User> getAll();
 }
