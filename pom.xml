@@ -27,6 +27,9 @@
         <module>mybatis-plus</module>
         <module>redis</module>
         <module>spring-cloud-alibaba-demo</module>
+        <module>elasticsearch</module>
+        <module>junit5-springboot3-demo</module>
+        <module>spring-jpa-demo</module>
     </modules>
 
     <properties>
