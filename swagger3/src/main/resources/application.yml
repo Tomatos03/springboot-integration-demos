@@ -1,12 +1,12 @@
+# 服务器配置
 server:
   port: 8080
 
+# SpringDoc OpenAPI 配置
 springdoc:
+  # API 文档接口路径
   api-docs:
     path: /v3/api-docs
+  # Swagger UI 界面路径
   swagger-ui:
     path: /swagger-ui
-
-app:
-  demo:
-    enable-swagger-ui: true

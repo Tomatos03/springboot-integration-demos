@@ -3,6 +3,9 @@ package com.example.swagger3.controller.admin;
 import com.example.swagger3.dto.Result;
 import com.example.swagger3.dto.UserDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
 
     @GetMapping("/me")
-    @Operation(summary = "当前管理员信息", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "当前管理员信息", description = "需要JWT Bearer Token认证",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "200", description = "返回当前管理员信息")
+    @ApiResponse(responseCode = "401", description = "未认证或认证失败")
     public Result<UserDto> me() {
         UserDto user = new UserDto(1L, "admin", "admin@example.com");
         return new Result<>(200, "ok", user);

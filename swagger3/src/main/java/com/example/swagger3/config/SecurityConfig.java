@@ -10,9 +10,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -27,34 +29,35 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf().disable()
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        .anyRequest().permitAll()
-                )
-                .httpBasic(Customizer.withDefaults());
-
-        // insert demo bearer filter before basic auth processing
-        http.addFilterBefore(demoBearerFilter(), org.springframework.security.web.authentication.www.BasicAuthenticationFilter.class);
-
-        return http.build();
+        return http.csrf(AbstractHttpConfigurer::disable)
+                   .authorizeHttpRequests(auth -> auth
+                           .requestMatchers("/admin/**", "/security/**")
+                           .hasRole("ADMIN")
+                           .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html")
+                           .permitAll()
+                           .anyRequest()
+                           .permitAll()
+                   )
+                   .addFilterBefore(demoBearerFilter(), BasicAuthenticationFilter.class)
+                   .build();
     }
 
     @Bean
     public OncePerRequestFilter demoBearerFilter() {
         return new OncePerRequestFilter() {
             @Override
-            protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+            protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                            FilterChain filterChain) throws ServletException, IOException {
                 String auth = request.getHeader(HttpHeaders.AUTHORIZATION);
                 if (auth != null && auth.startsWith("Bearer ")) {
-                    String token = auth.substring(7).trim();
+                    String token = auth.substring(7)
+                                       .trim();
                     if ("demo-admin-token".equals(token)) {
                         // set authentication with ROLE_ADMIN for demo
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                                 "demo", null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        SecurityContextHolder.getContext()
+                                             .setAuthentication(authentication);
                     }
                 }
                 filterChain.doFilter(request, response);
