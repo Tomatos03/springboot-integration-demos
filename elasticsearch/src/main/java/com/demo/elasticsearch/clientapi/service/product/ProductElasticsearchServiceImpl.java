@@ -4,10 +4,6 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.Result;
 import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
-import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval;
-import co.elastic.clients.elasticsearch._types.aggregations.DateHistogramBucket;
-import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.mapping.Property;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
@@ -46,7 +42,7 @@ public class ProductElasticsearchServiceImpl implements ProductElasticsearchServ
     }
 
     @Override
-    public boolean createIndex() throws IOException {
+    public boolean createIndexIfNotExist() throws IOException {
         if (indexExists()) {
             return false;
         }
@@ -297,7 +293,7 @@ public class ProductElasticsearchServiceImpl implements ProductElasticsearchServ
     @Override
     public BulkUpsertResponse initSampleData() throws IOException {
         if (!indexExists()) {
-            boolean result = createIndex();
+            boolean result = createIndexIfNotExist();
             log.info("创建索引products，结果: {}", result);
         }
         BulkUpsertRequest request = new BulkUpsertRequest();
@@ -387,78 +383,118 @@ public class ProductElasticsearchServiceImpl implements ProductElasticsearchServ
     }
 
     private List<ProductUpsertRequest> buildSampleProducts() {
-        ProductUpsertRequest p1 = new ProductUpsertRequest();
-        p1.setId("p-1001");
-        p1.setName("iPhone 15");
-        p1.setCategory("phone");
-        p1.setBrand("Apple");
-        p1.setPrice(BigDecimal.valueOf(5999));
-        p1.setSales(3200);
-        p1.setStock(150);
-        p1.setTags(List.of("smartphone", "ios"));
-        p1.setDescription("Apple 手机，A 系列芯片，拍照和性能均衡");
-        p1.setCreateTime(new Date(System.currentTimeMillis() - 3L * 30 * 24 * 60 * 60 * 1000));
+        List<ProductUpsertRequest> products = new ArrayList<>();
 
-        ProductUpsertRequest p2 = new ProductUpsertRequest();
-        p2.setId("p-1002");
-        p2.setName("Mate 70 Pro");
-        p2.setCategory("phone");
-        p2.setBrand("Huawei");
-        p2.setPrice(BigDecimal.valueOf(6999));
-        p2.setSales(2100);
-        p2.setStock(90);
-        p2.setTags(List.of("smartphone", "harmonyos"));
-        p2.setDescription("华为旗舰手机，影像能力突出");
-        p2.setCreateTime(new Date(System.currentTimeMillis() - 2L * 30 * 24 * 60 * 60 * 1000));
+        String[] categories = {"phone", "laptop", "headphone", "tablet", "smartwatch", "camera", "monitor", "keyboard", "mouse", "speaker"};
+        String[][] categoryTags = {
+            {"smartphone", "ios"}, {"smartphone", "harmonyos"}, {"smartphone", "android"},
+            {"laptop", "office"}, {"laptop", "business"}, {"laptop", "gaming"}, {"laptop", "creative"},
+            {"audio", "noise-canceling"}, {"audio", "wireless"}, {"audio", "hifi"},
+            {"tablet", "ios"}, {"tablet", "android"}, {"tablet", "productivity"},
+            {"smartwatch", "fitness"}, {"smartwatch", "health"}, {"smartwatch", "luxury"},
+            {"camera", "dslr"}, {"camera", "mirrorless"}, {"camera", "action"},
+            {"monitor", "gaming"}, {"monitor", "professional"}, {"monitor", "4k"},
+            {"keyboard", "mechanical"}, {"keyboard", "membrane"}, {"keyboard", "wireless"},
+            {"mouse", "gaming"}, {"mouse", "office"}, {"mouse", "vertical"},
+            {"speaker", "bluetooth"}, {"speaker", "smart"}, {"speaker", "portable"}
+        };
+        String[] brands = {"Apple", "Huawei", "Xiaomi", "Lenovo", "Sony", "Samsung", "OPPO", "vivo", "ASUS", "Dell", "Microsoft", "Google", "OnePlus", "Realme", "Acer", "HP", "Bose", "JBL", "Logitech", "Razer", "SteelSeries"};
+        String[] descriptions = {
+            "旗舰级产品，性能卓越", "性价比之选，值得拥有", "专业级设备，满足需求",
+            "轻薄设计，便于携带", "续航持久，使用安心", "影像能力出众，拍照清晰",
+            "音质优秀，沉浸体验", "屏幕素质高，观感舒适", "散热出色，运行稳定",
+            "外观时尚，做工精细"
+        };
+        Random random = new Random(42);
 
-        ProductUpsertRequest p3 = new ProductUpsertRequest();
-        p3.setId("p-1003");
-        p3.setName("Xiaomi 15");
-        p3.setCategory("phone");
-        p3.setBrand("Xiaomi");
-        p3.setPrice(BigDecimal.valueOf(4299));
-        p3.setSales(2800);
-        p3.setStock(240);
-        p3.setTags(List.of("smartphone", "android"));
-        p3.setDescription("小米手机，主打高性价比与快充");
-        p3.setCreateTime(new Date(System.currentTimeMillis() - 1L * 30 * 24 * 60 * 60 * 1000));
+        String[] modelSuffixes = {
+            "Pro Max", "Pro", "Ultra", "Ultimate", "Elite",
+            "Air", "Lite", "Mini", "Max", "Plus",
+            "Slim", "Classic", "Special Edition", "Power", "Studio",
+            "Master", "Neo", "Prime", "Sport", "Extreme"
+        };
+        String[] colors = {"Space Black", "Silver", "Starlight", "Midnight", "Graphite",
+            "Gold", "Deep Purple", "Sierra Blue", "Alpine Green", "Red",
+            "White", "Gray", "Blue", "Pink", "Purple",
+            "Orange", "Yellow", "Titanium", "Obsidian", "Ivory"
+        };
+        // Used to guarantee unique product names
+        java.util.HashSet<String> usedNames = new java.util.HashSet<>();
 
-        ProductUpsertRequest p4 = new ProductUpsertRequest();
-        p4.setId("p-1004");
-        p4.setName("MacBook Air M3");
-        p4.setCategory("laptop");
-        p4.setBrand("Apple");
-        p4.setPrice(BigDecimal.valueOf(8999));
-        p4.setSales(1100);
-        p4.setStock(60);
-        p4.setTags(List.of("laptop", "office"));
-        p4.setDescription("轻薄笔记本电脑，续航优秀");
-        p4.setCreateTime(new Date(System.currentTimeMillis() - 5L * 30 * 24 * 60 * 60 * 1000));
+        for (int i = 0; i < 50; i++) {
+            ProductUpsertRequest product = new ProductUpsertRequest();
+            int categoryIndex = random.nextInt(categories.length);
+            String category = categories[categoryIndex];
+            product.setId("p-" + (1001 + i));
+            product.setCategory(category);
 
-        ProductUpsertRequest p5 = new ProductUpsertRequest();
-        p5.setId("p-1005");
-        p5.setName("ThinkPad X1 Carbon");
-        p5.setCategory("laptop");
-        p5.setBrand("Lenovo");
-        p5.setPrice(BigDecimal.valueOf(9999));
-        p5.setSales(800);
-        p5.setStock(35);
-        p5.setTags(List.of("laptop", "business"));
-        p5.setDescription("商务办公笔记本，键盘手感出色");
-        p5.setCreateTime(new Date(System.currentTimeMillis() - 4L * 30 * 24 * 60 * 60 * 1000));
+            int brandIndex = random.nextInt(brands.length);
+            product.setBrand(brands[brandIndex]);
 
-        ProductUpsertRequest p6 = new ProductUpsertRequest();
-        p6.setId("p-1006");
-        p6.setName("Sony WH-1000XM5");
-        p6.setCategory("headphone");
-        p6.setBrand("Sony");
-        p6.setPrice(BigDecimal.valueOf(2299));
-        p6.setSales(4300);
-        p6.setStock(380);
-        p6.setTags(List.of("audio", "noise-canceling"));
-        p6.setDescription("头戴式降噪耳机，音质优秀");
-        p6.setCreateTime(new Date(System.currentTimeMillis() - 6L * 30 * 24 * 60 * 60 * 1000));
+            int tagSetIndex = random.nextInt(categoryTags.length);
+            String[] tagsForCategory = categoryTags[tagSetIndex];
+            if (tagsForCategory.length >= 2) {
+                product.setTags(List.of(tagsForCategory[0], tagsForCategory[1]));
+            } else {
+                product.setTags(List.of(tagsForCategory[0]));
+            }
 
-        return List.of(p1, p2, p3, p4, p5, p6);
+            // Generate a unique product name
+            String[][] modelNames = getModelNames(category);
+            String[] models = modelNames[random.nextInt(modelNames.length)];
+            String name;
+            do {
+                String model = models[random.nextInt(models.length)];
+                String suffix = modelSuffixes[random.nextInt(modelSuffixes.length)];
+                String color = colors[random.nextInt(colors.length)];
+                name = model + " " + suffix + " (" + color + ")";
+            } while (!usedNames.add(name));
+            product.setName(name);
+
+            int basePrice = getBasePrice(category);
+            int priceVariation = random.nextInt(5000);
+            product.setPrice(BigDecimal.valueOf(basePrice + priceVariation));
+
+            product.setSales(500 + random.nextInt(5000));
+            product.setStock(20 + random.nextInt(300));
+            product.setDescription(brands[brandIndex] + " " + category + "，" + descriptions[random.nextInt(descriptions.length)]);
+            product.setCreateTime(new Date(System.currentTimeMillis() - (long) (random.nextInt(365)) * 24 * 60 * 60 * 1000));
+
+            products.add(product);
+        }
+
+        return products;
+    }
+
+    private String[][] getModelNames(String category) {
+        return switch (category) {
+            case "phone" -> new String[][]{{"iPhone", "Pura", "Xiaomi", "Galaxy", "Pixel", "Find", "X", "Mate", "GT", "Nord"}};
+            case "laptop" -> new String[][]{{"MacBook", "ThinkPad", "Xiaomi", "Gram", "Surface", "ProArt", "ZenBook", " XPS", "Legion", " Pavilion"}};
+            case "headphone" -> new String[][]{{"AirPods", "FreeBuds", "Xiaomi", "WH", "Pixel Buds", "Enco", "WF", "QuietComfort", "Tune", "Cloud"}};
+            case "tablet" -> new String[][]{{"iPad", "MatePad", "Xiaomi", "Galaxy", "Surface", "Tab", "Pad", "Yoga", "IdeaPad", "Fire"}};
+            case "smartwatch" -> new String[][]{{"Apple Watch", "Watch GT", "Xiaomi", "Galaxy Watch", "Pixel Watch", "Watch", "Fitbit", "TicWatch", "Amazfit", "Fossil"}};
+            case "camera" -> new String[][]{{"EOS", "X", "Alpha", "Lumix", "Coolpix", "Insta360", "Hero", "PowerShot", "DSC", "RX"}};
+            case "monitor" -> new String[][]{{"Studio Display", "ThinkVision", "Xiaomi", "Odyssey", "Surface", "ProDisplay", "Predator", "UltraGear", "AGON", "FlexScan"}};
+            case "keyboard" -> new String[][]{{"Magic Keyboard", "ThinkPad", "Xiaomi", "Galaxy", "Surface", "K380", "Corsair", "Razer", "Logitech", "Keychron"}};
+            case "mouse" -> new String[][]{{"Magic Mouse", "ThinkPad", "Xiaomi", "Galaxy", "Surface", "MX Master", "Razer", "Logitech", "SteelSeries", "G"}};
+            case "speaker" -> new String[][]{{"HomePod", "Sound", "Xiaomi", "Galaxy", "Home", "Echo", "Sonos", "JBL", "Bose", "Marshall"}};
+            default -> new String[][]{{"Product"}};
+        };
+    }
+
+    private int getBasePrice(String category) {
+        return switch (category) {
+            case "phone" -> 3000;
+            case "laptop" -> 5000;
+            case "headphone" -> 500;
+            case "tablet" -> 2000;
+            case "smartwatch" -> 1500;
+            case "camera" -> 4000;
+            case "monitor" -> 1500;
+            case "keyboard" -> 300;
+            case "mouse" -> 200;
+            case "speaker" -> 800;
+            default -> 1000;
+        };
     }
 }

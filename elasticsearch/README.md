@@ -13,6 +13,9 @@ src/main/java/com/demo/elasticsearch/
 ├── clientapi/           # ES Client API 层
 │   ├── controller/      # REST API 控制器
 │   └── service/         # ES 查询服务接口及实现
+│       ├── advanced/    # 高级搜索 (高亮搜索等)
+│       ├── aggregation/ # 聚合查询 (Aggregation queries)
+│       ├── autocomplete/# 自动补全 (Autocomplete)
 │       ├── compound/    # 复合查询 (Compound queries)
 │       ├── fulltext/    # 全文检索 (Full text queries)
 │       ├── product/     # 基础商品操作服务 (包含 impl 实现类)
@@ -94,6 +97,18 @@ curl -X POST "http://localhost:8083/api/es/client/search/bool" \
 5. **聚合分析 (Category Aggregation)**
 ```bash
 curl -X GET "http://localhost:8083/api/es/client/products/agg/category?size=10"
+```
+
+6. **自动补全 (Autocomplete)**
+```bash
+curl -X GET "http://localhost:8083/api/es/client/autocomplete?keyword=苹&limit=5"
+```
+
+7. **高亮搜索 (Highlight Search)**
+```bash
+curl -X POST "http://localhost:8083/api/es/advanced/highlight-search" \
+     -H "Content-Type: application/json" \
+     -d '{"keyword": "手机"}'
 ```
 
 ---
@@ -231,3 +246,22 @@ Elasticsearch 提供了丰富的字段数据类型，用于定义文档中不同
 > [!NOTE]
 > 
 > **代码参考** [SpecialQueryServiceImpl](src/main/java/com/demo/elasticsearch/clientapi/service/special/SpecialQueryServiceImpl.java) 类。
+
+## 自动补全
+
+- **工作原理**：基于 `prefix` 前缀查询实现。对商品 `name` 字段进行**大小写不敏感**的前缀匹配，返回去重后的商品名称作为补全建议列表。
+- **适用场景**：搜索框输入联想、搜索建议下拉列表。
+
+> [!NOTE]
+> 
+> **代码参考** [AutocompleteServiceImpl](src/main/java/com/demo/elasticsearch/clientapi/service/autocomplete/AutocompleteServiceImpl.java) 与 [AutocompleteController](src/main/java/com/demo/elasticsearch/clientapi/controller/AutocompleteController.java) 类。
+
+## 高亮搜索 
+
+- **工作原理**：基于 `multi_match` 多字段全文检索，结合 ES Highlight API，在匹配结果中使用 HTML 标签（默认 `<em>`）包裹命中的关键词片段，便于前端高亮渲染。
+- **适用场景**：搜索结果页面需要高亮显示匹配关键词的场景。
+
+
+> [!NOTE]
+> 
+> **代码参考** [AdvancedSearchServiceImpl](src/main/java/com/demo/elasticsearch/clientapi/service/advanced/AdvancedSearchServiceImpl.java) 与 [AdvancedSearchController](src/main/java/com/demo/elasticsearch/clientapi/controller/AdvancedSearchController.java) 类。
