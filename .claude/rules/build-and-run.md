@@ -11,6 +11,7 @@ mvn -DskipTests clean install
 # 只构建某个模块及其兄弟依赖（-am 会把同 reactor 的依赖一起构建）
 mvn -pl mybatis-plus -am clean package -DskipTests
 mvn -pl spring-security/form-auth -am clean package -DskipTests            # 顺带构建 common
+mvn -pl excel-to-pdf -am clean package -DskipTests                         # 顺带构建 fesode-excel
 mvn -pl spring-cloud-alibaba-demo/alibaba-gateway -am clean package -DskipTests
 ```
 
@@ -22,6 +23,10 @@ mvn -pl spring-cloud-alibaba-demo/alibaba-gateway -am clean package -DskipTests
 # 以 form-auth 为例：先装 common，再运行
 mvn -pl spring-security/common -am install -DskipTests
 mvn -pl spring-security/form-auth spring-boot:run -DskipTests        # 或 cd 进模块目录后 mvn spring-boot:run
+
+# excel-to-pdf：先装 fesode-excel（普通 jar），再运行（需本机装 LibreOffice，见模块 README）
+mvn -pl fesode-excel -am install -DskipTests
+mvn -pl excel-to-pdf spring-boot:run -DskipTests
 ```
 
 无兄弟依赖的模块直接运行：
@@ -59,7 +64,7 @@ mvn -pl junit5-springboot3-demo -Dtest=DemoControllerWebMvcTest#方法名 test
 mvn -pl mybatis-plus -am test
 ```
 
-注意：仓库测试不多且分散。部分测试需要真实外部中间件（如 `elasticsearch` 的 `AutocompleteServiceTest` 需要 ES，`mybatis`/cloud service 的测试需要数据库）。本地未起中间件时用 `-DskipTests` 编译，或只跑不依赖中间件的模块（如 `junit5-springboot3-demo`、`Jwt`）。
+注意：仓库测试不多且分散。部分测试需要真实外部中间件（如 `elasticsearch` 的 `AutocompleteServiceTest` 需要 ES，`mybatis`/cloud service 的测试需要数据库，`excel-to-pdf` 的 `ExcelPdfManualCheckTest` 需要本机 LibreOffice、未安装会自动跳过）。本地未起中间件时用 `-DskipTests` 编译，或只跑不依赖中间件的模块（如 `junit5-springboot3-demo`、`Jwt`）。
 
 ## elasticsearch-ui（前端）
 

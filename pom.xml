@@ -31,6 +31,7 @@
         <module>junit5-springboot3-demo</module>
         <module>spring-jpa-demo</module>
         <module>fesode-excel</module>
+        <module>excel-to-pdf</module>
     </modules>
 
     <properties>

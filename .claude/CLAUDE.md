@@ -8,8 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 关键事实
 
-- **模块独立**：大多数顶层模块是单应用 demo，可单独构建/运行。少数是聚合模块（`rabbitmq`、`spring-security`、`spring-cloud-alibaba-demo`），详见 @rules/architecture.md。
-- **外部基础设施**：不少 demo 依赖本机或容器中的中间件（Redis、RabbitMQ、MariaDB、Elasticsearch、Zookeeper/Nacos 等）；只有 `elasticsearch/` 和 `spring-cloud-alibaba-demo/` 提供 `docs/docker` compose 编排。
+- **模块独立**：大多数顶层模块是单应用 demo，可单独构建/运行。少数是聚合模块（`rabbitmq`、`spring-security`、`spring-cloud-alibaba-demo`），另有跨模块依赖：spring-security 的子应用依赖兄弟模块 `common`，`excel-to-pdf` 依赖兄弟模块 `fesode-excel`（复用其 Excel 生成），详见 @rules/architecture.md。
+- **外部基础设施**：不少 demo 依赖本机或容器中的中间件（Redis、RabbitMQ、MariaDB、Elasticsearch、Zookeeper/Nacos 等）；`elasticsearch/`、`spring-cloud-alibaba-demo/` 与 `excel-to-pdf/` 提供 `docs/docker` 编排（其中 excel-to-pdf 是自建「JDK + LibreOffice」运行镜像）。
 - **不在 Maven reactor 内**：`elasticsearch-ui/`（Vue 3 + Vite + pnpm 前端）是独立项目；`oauth2/` 是未纳入 git 的本地目录，忽略即可。
 - **模块内 AGENTS.md**：`elasticsearch/` 与 `elasticsearch-ui/` 自带 `AGENTS.md`（Claude Code 会自动加载），这两个模块的专属约定以它为准。
 - **语言**：代码注释、README、commit message 使用中文，术语与标识符用英文。

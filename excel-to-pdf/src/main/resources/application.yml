@@ -1,0 +1,14 @@
+server:
+  port: 8080
+
+excel-to-pdf:
+  libreoffice:
+    # soffice 可执行文件路径；留空自动探测 PATH 中的 soffice / libreoffice
+    binary: ""
+    # 单次转换超时（秒）
+    timeout-seconds: 120
+    # 转换临时目录是否保留（排错用），默认 false
+    keep-work-files: false
+    # 转换产物 PDF 的纸张大小（A4 / LETTER）。LibreOffice 导出无纸张参数，PDFUtil
+    # 转换前按此改写每个 Sheet 的页面设置，默认 A4
+    paper-size: a4

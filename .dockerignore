@@ -1,0 +1,13 @@
+# excel-to-pdf 等以「仓库根」为构建上下文时的忽略项：只保留 Maven reactor 需要的源码与 pom
+
+.git
+.idea
+*.iml
+*.log
+
+# Maven 构建产物
+**/target
+
+# 前端依赖 / 本地目录（不在 reactor 内）
+**/node_modules
+oauth2

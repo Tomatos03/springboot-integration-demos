@@ -1,0 +1,11 @@
+services:
+  excel-to-pdf:
+    container_name: excel-to-pdf
+    build:
+      # context 以 compose.yml 所在目录为基准解析：docs/docker 上溯 3 层到仓库根
+      # （reactor 构建 -pl excel-to-pdf -am 需要根 pom 与兄弟模块 fesode-excel）
+      context: ../../..
+      dockerfile: excel-to-pdf/docs/docker/Dockerfile
+    ports:
+      - "8080:8080"
+    restart: unless-stopped

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.demo</groupId>
+        <artifactId>springboot-integration-demos</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>excel-to-pdf</artifactId>
+    <name>excel-to-pdf</name>
+    <description>Reuse fesode-excel (POI) to generate a multi-sheet Excel, then convert it to PDF via LibreOffice headless</description>
+    <packaging>jar</packaging>
+
+    <properties>
+        <!-- 显式指定启动主类：classpath 中同时存在兄弟模块 fesode-excel 的 main，
+             spring-boot:run / repackage 扫描会因多个 main 而歧义，故显式声明 -->
+        <spring-boot.run.main-class>com.demo.exceltopdf.ExcelToPdfApplication</spring-boot.run.main-class>
+        <!-- POI 版本与兄弟模块 fesode-excel 声明的 poi.version 保持一致（见其 pom） -->
+        <poi.version>5.5.1</poi.version>
+    </properties>
+
+    <dependencies>
+        <!-- Web 层：提供导出下载端点 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- 兄弟模块 fesode-excel：复用其 ExcelUtil + classpath 模板生成「多 Sheet Excel」。
+             该模块已在 pom 关闭 spring-boot repackage，产物是普通 jar 可作为依赖 -->
+        <dependency>
+            <groupId>org.demo</groupId>
+            <artifactId>fesode-excel</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- 直接用 POI 改写 xlsx：PDFUtil 在调用 soffice 前把每个 Sheet 的页面纸型
+             设为配置值（LibreOffice 导出 PDF 没有纸张参数）。版本与上方 fesode-excel
+             使用的 poi.version 保持一致，避免 classpath 出现两个 POI 版本 -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

@@ -40,6 +40,13 @@
 | `elasticsearch` | ES Java Client 8.18.8 示例（CRUD、term/compound/fulltext/aggregation 查询、自动补全、高亮）；默认 8083；模块专属细节见其 `AGENTS.md` |
 | `junit5-springboot3-demo` | JUnit 5 三种测试写法的样板模块：纯单测 / `@WebMvcTest` 切片 / `@SpringBootTest` 集成测试，新增测试可参考它 |
 
+### 文档 / 办公
+
+| 模块 | 技术 / 说明 |
+|---|---|
+| `fesode-excel` | POI + Apache Fesod（fesod-sheet）：单 Sheet 模板动态生成单文件多 Sheet Excel；**已关闭 spring-boot repackage**，产物是普通 jar，可被 `excel-to-pdf` 作为依赖复用 |
+| `excel-to-pdf` | **依赖兄弟模块 `fesode-excel`**：复用其 ExcelUtil 生成多 Sheet Excel → `PDFUtil`（util 包静态工具）以进程调用 LibreOffice headless 转 PDF（分页遵循源 xlsx 每个 Sheet 的打印设置，不强制作一页一 Sheet）；默认 8080，运行前需装 LibreOffice（见模块 README） |
+
 ### Spring Cloud Alibaba（嵌套聚合）
 
 `spring-cloud-alibaba-demo/` 内部再聚合 `alibaba-common`（共享模型与异常）、`alibaba-gateway`（网关，端口 8888）、`cloud-service`（三个 Dubbo 服务）。业务链路：Gateway 路由 → Dubbo 服务 → MySQL，并集成 Seata（分布式事务）、Sentinel（流控）、SkyWalking（链路追踪）。
@@ -51,7 +58,7 @@
 
 | 运行单元 | 默认端口 |
 |---|---|
-| swagger3 / spring-task / mybatis / mybatis-plus / Jwt / form-auth / sms-auth / oauth2-auth | 8080（多个同为 8080 的 demo 不可同时运行） |
+| swagger3 / spring-task / mybatis / mybatis-plus / Jwt / form-auth / sms-auth / oauth2-auth / fesode-excel / excel-to-pdf | 8080（多个同为 8080 的 demo 不可同时运行） |
 | basic-auth / account-service | 8081 |
 | redis / order-service | 8082 |
 | elasticsearch / storage-service | 8083 |
@@ -65,4 +72,5 @@ Docker 编排位置：
 
 - `elasticsearch/docs/docker/docker-compose.yml`：ES 8.18.8 + Kibana（`localhost:9200`）
 - `spring-cloud-alibaba-demo/docs/docker/compose.yml`（配套 `.env`）：MySQL、Zookeeper、Seata、SkyWalking（Nacos 已注释，可选启用）
+- `excel-to-pdf/docs/docker/`：Dockerfile + compose，构建「JDK + LibreOffice」镜像直接运行应用（构建上下文是仓库根目录）
 - 其它模块默认假设本机已有中间件；如需容器化，沿用 `<module>/docs/docker/compose.yml` 的既有模式。

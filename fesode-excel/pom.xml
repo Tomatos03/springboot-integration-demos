@@ -73,6 +73,15 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <!-- 本模块同时被 excel-to-pdf 作为普通 jar 依赖：关闭 spring-boot repackage，
+                     产物保持普通 jar（否则 classes 被打进 BOOT-INF/classes 无法作为依赖使用）。
+                     运行仍用 mvn spring-boot:run，不受影响。 -->
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
