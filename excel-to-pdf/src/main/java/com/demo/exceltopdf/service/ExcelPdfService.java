@@ -1,7 +1,7 @@
 package com.demo.exceltopdf.service;
 
 import com.demo.exceltopdf.config.LibreOfficeProperties;
-import com.demo.exceltopdf.util.PDFUtil;
+import com.demo.exceltopdf.util.PdfUtil;
 import com.demo.fesodeexcel.model.ReportRow;
 import com.demo.fesodeexcel.model.SheetData;
 import com.demo.fesodeexcel.util.ExcelUtil;
@@ -25,7 +25,7 @@ import java.util.Map;
  *   <li>{@link ExcelUtil#generateMultiSheet(byte[], List)}——把本模块
  *       {@code resources/excel-template/} 下的单 Sheet 模板读成字节，克隆 + Fesod
  *       填充出多 Sheet Excel；</li>
- *   <li>生成的 xlsx 字节再交给 {@link PDFUtil}，由 LibreOffice headless 导出 PDF。
+ *   <li>生成的 xlsx 字节再交给 {@link PdfUtil}，由 LibreOffice headless 导出 PDF。
  *       PDF 分页遵循源 xlsx 每个 Sheet 自带的打印设置，本模块不强制作一页一 Sheet；
  *       纸张大小由 {@code excel-to-pdf.libreoffice.paper-size} 控制（默认 A4），
  *       转换前统一改写进各 Sheet 的页面设置。</li>
@@ -61,7 +61,7 @@ public class ExcelPdfService {
      * @param out 输出流（所有权在调用方，本方法只写入并 flush）
      */
     public void exportDemoPdf(OutputStream out) {
-        write(out, PDFUtil.excelToPdf(buildDemoXlsx(), properties));
+        write(out, PdfUtil.excelToPdf(buildDemoXlsx(), properties));
     }
 
     /**

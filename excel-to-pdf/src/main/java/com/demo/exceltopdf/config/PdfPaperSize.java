@@ -1,5 +1,6 @@
 package com.demo.exceltopdf.config;
 
+import com.demo.exceltopdf.util.PdfUtil;
 import org.apache.poi.ss.usermodel.PrintSetup;
 
 /**
@@ -7,7 +8,7 @@ import org.apache.poi.ss.usermodel.PrintSetup;
  *
  * <p>LibreOffice 导出 PDF 时没有「纸张大小」参数，PDF 纸型只由源 xlsx 每个 Sheet 的
  * 页面设置决定。因此本枚举只表达「PDF 成品想要多大纸」，具体如何落到 xlsx 页面设置
- * 由 {@link com.demo.exceltopdf.util.PDFUtil} 在转换前改写完成。
+ * 由 {@link PdfUtil} 在转换前改写完成。
  *
  * @author Tomatos
  */

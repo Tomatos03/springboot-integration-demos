@@ -1,5 +1,6 @@
 package com.demo.exceltopdf.config;
 
+import com.demo.exceltopdf.util.PdfUtil;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -8,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * <p>转换依赖本机已安装 LibreOffice（提供 {@code soffice} 可执行文件）；本类负责
  * 描述「怎么找到它、转换给多久时间、临时文件是否保留、产物 PDF 用多大纸」，
- * 具体调用逻辑见 {@link com.demo.exceltopdf.util.PDFUtil}。
+ * 具体调用逻辑见 {@link PdfUtil}。
  *
  * @author Tomatos
  */

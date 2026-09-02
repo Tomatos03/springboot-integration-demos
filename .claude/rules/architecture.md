@@ -45,7 +45,7 @@
 | 模块 | 技术 / 说明 |
 |---|---|
 | `fesode-excel` | POI + Apache Fesod（fesod-sheet）：单 Sheet 模板动态生成单文件多 Sheet Excel；**已关闭 spring-boot repackage**，产物是普通 jar，可被 `excel-to-pdf` 作为依赖复用 |
-| `excel-to-pdf` | **依赖兄弟模块 `fesode-excel`**：复用其 ExcelUtil 生成多 Sheet Excel → `PDFUtil`（util 包静态工具）以进程调用 LibreOffice headless 转 PDF（分页遵循源 xlsx 每个 Sheet 的打印设置，不强制作一页一 Sheet）；默认 8080，运行前需装 LibreOffice（见模块 README） |
+| `excel-to-pdf` | **依赖兄弟模块 `fesode-excel`**：复用其 ExcelUtil 生成多 Sheet Excel → `PdfUtil`（util 包静态工具）以进程调用 LibreOffice headless 转 PDF（分页遵循源 xlsx 每个 Sheet 的打印设置，不强制作一页一 Sheet）；默认 8080，运行前需装 LibreOffice（见模块 README） |
 
 ### Spring Cloud Alibaba（嵌套聚合）
 

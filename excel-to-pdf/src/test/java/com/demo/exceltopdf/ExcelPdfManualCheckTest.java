@@ -8,7 +8,7 @@ import java.nio.file.Path;
 
 import com.demo.exceltopdf.config.LibreOfficeProperties;
 import com.demo.exceltopdf.service.ExcelPdfService;
-import com.demo.exceltopdf.util.PDFUtil;
+import com.demo.exceltopdf.util.PdfUtil;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -61,8 +61,8 @@ class ExcelPdfManualCheckTest {
         System.out.println("已生成中间 Excel（人工核对用）: " + xlsx.toAbsolutePath());
 
         // LibreOffice 未安装时跳过 PDF 部分
-        assumeTrue(PDFUtil.isLibreOfficeAvailable(props),
-                "本机未找到 soffice，跳过 PDF 转换；安装 LibreOffice 后重跑即可");
+        assumeTrue(PdfUtil.isLibreOfficeAvailable(props),
+                   "本机未找到 soffice，跳过 PDF 转换；安装 LibreOffice 后重跑即可");
 
         Path pdf = OUTPUT_DIR.resolve(PDF_FILE);
         try (OutputStream out = Files.newOutputStream(pdf)) {

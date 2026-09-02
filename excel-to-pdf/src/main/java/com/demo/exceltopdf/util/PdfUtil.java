@@ -55,7 +55,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  */
 @Slf4j
 @UtilityClass
-public class PDFUtil {
+public class PdfUtil {
 
     /** 输入 xlsx 的临时文件名（PDF 产物与其同 basename） */
     private static final String INPUT_FILE_NAME = "input.xlsx";

@@ -15,10 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 导出 Demo 控制器：
- * <ul>
- *   <li>{@code GET /excel-pdf/pdf}——生成多 Sheet Excel 并经 LibreOffice 转为 PDF 下载；</li>
- *   <li>{@code GET /excel-pdf/xlsx}——只生成中间产物 Excel 下载，便于与 PDF 对照。</li>
- * </ul>
  *
  * @author Tomatos
  */
