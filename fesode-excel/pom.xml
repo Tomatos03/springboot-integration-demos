@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.demo</groupId>
+        <artifactId>springboot-integration-demos</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>fesode-excel</artifactId>
+    <name>fesode-excel</name>
+    <description>Apache Fesod (fesode-excel) + Apache POI: single-sheet template dynamically generates a multi-sheet Excel</description>
+    <packaging>jar</packaging>
+
+    <properties>
+        <poi.version>5.5.1</poi.version>
+        <fesod.version>2.0.2-incubating</fesod.version>
+        <hutool.version>5.8.39</hutool.version>
+    </properties>
+
+    <dependencies>
+        <!-- Web layer for a demo controller that serves the generated xlsx -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Apache POI: builds the single-sheet template and clones it into N sheets -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+
+        <!-- Apache Fesod (FastExcel donated to Apache, renamed Fesod, artifact fesod-sheet):
+             fills the placeholders with each cloned sheet to produce one multi-sheet workbook -->
+        <dependency>
+            <groupId>org.apache.fesod</groupId>
+            <artifactId>fesod-sheet</artifactId>
+            <version>${fesod.version}</version>
+        </dependency>
+
+        <!-- Hutool: 简化字符串/集合判空、默认值等样板代码（与 spring-security 模块同版本） -->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>${hutool.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!-- 将 src/main/resource 也纳入 classpath，便于读取 excel-template 模板文件 -->
+        <resources>
+            <resource>
+                <directory>src/main/resource</directory>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
