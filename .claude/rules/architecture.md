@@ -40,6 +40,12 @@
 | `elasticsearch` | ES Java Client 8.18.8 示例（CRUD、term/compound/fulltext/aggregation 查询、自动补全、高亮）；默认 8083；模块专属细节见其 `AGENTS.md` |
 | `junit5-springboot3-demo` | JUnit 5 三种测试写法的样板模块：纯单测 / `@WebMvcTest` 切片 / `@SpringBootTest` 集成测试，新增测试可参考它 |
 
+### 配置 / 日志
+
+| 模块 | 技术 / 说明 |
+|---|---|
+| `logging-file-demo` | 纯配置演示「`@Slf4j` 日志持久化到文件」：`logging.file.name` 指定文件、`logging.logback.rollingpolicy.*` 控制滚动（大小/历史/总量），不引入自定义 logback 配置；带 `debug` profile 演示级别放行；默认 8080 |
+
 ### 文档 / 办公
 
 | 模块 | 技术 / 说明 |

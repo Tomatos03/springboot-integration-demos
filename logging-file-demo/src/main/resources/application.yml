@@ -1,0 +1,37 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: logging-file-demo
+
+logging:
+  file:
+    name: logs/app.log
+  logback:
+    rollingpolicy:
+      # 单个文件达到 10MB 触发滚动
+      max-file-size: 10MB
+      # 最多保留 30 个归档文件
+      max-history: 30
+      # 归档文件总大小上限 300MB, 超出删除最旧的
+      total-size-cap: 300MB
+      # 归档命名: app.log.2025-09-03.0.log.gz (日期+序号, gzip 压缩)
+      file-name-pattern: ${LOG_FILE}.%d{yyyy-MM-dd}.%i.log.gz
+  level:
+    # 全局默认级别 INFO
+    root: INFO
+    # 指定包级别的级别, 优先级高于 root; 想看 DEBUG 日志可把它临时改为 DEBUG
+    org.demo.logging.controller: INFO
+
+---
+# 演示用 profile: 调低某个包的日志级别, 便于观察 DEBUG 日志落到文件
+# 启动: java -jar ... --spring.profiles.active=debug
+spring:
+  config:
+    activate:
+      on-profile: debug
+
+logging:
+  level:
+    org.demo.logging.controller: DEBUG

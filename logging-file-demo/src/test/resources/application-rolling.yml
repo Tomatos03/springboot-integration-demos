@@ -1,0 +1,14 @@
+# 仅测试可见的 profile: 专门用于验证「日志文件滚动(归档)」行为。
+# 通过 @ActiveProfiles("rolling") 激活, 无需要求便可持续观察:
+#   - max-file-size 调小到 1KB, 少量日志即可触发滚动
+#   - max-history=2, 用于说明归档按「日期窗口」清理(同一天内由 max-file-size
+#     滚动出的多个归档不受它约束, 见测试类注释)
+#   - total-size-cap 调小到 6KB, 让「归档不会无限增长」在同一测试内可被确定性观察
+#   - file-name-pattern 用默认, 归档名形如 app.log.2025-09-03.0.log.gz
+# 日志文件路径复用 surefire 注入的 target/test-logs/app.log(见 pom.xml)。
+logging:
+  logback:
+    rollingpolicy:
+      max-file-size: 1KB
+      max-history: 2
+      total-size-cap: 6KB

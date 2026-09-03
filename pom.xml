@@ -32,6 +32,7 @@
         <module>spring-jpa-demo</module>
         <module>fesode-excel</module>
         <module>excel-to-pdf</module>
+        <module>logging-file-demo</module>
     </modules>
 
     <properties>

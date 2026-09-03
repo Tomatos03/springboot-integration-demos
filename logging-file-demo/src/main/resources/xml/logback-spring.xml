@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- 1) 日志文件路径与归档命名规则 (可用 -DAPP_LOG_FILE=... 覆盖, :- 后是默认值) -->
+    <property name="APP_LOG_FILE" value="${APP_LOG_FILE:-logs/app-xml.log}"/>
+    <!-- 归档文件命名: app-xml.log.2025-09-03.0.log.gz (日期 + 序号, gzip 压缩) -->
+    <property name="APP_LOG_PATTERN" value="${APP_LOG_FILE}.%d{yyyy-MM-dd}.%i.log.gz"/>
+
+    <!-- 2) 控制台 Appender: 彩色输出, 便于本地开发时肉眼区分级别 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 3) 滚动文件 Appender: 按「时间+大小」双重条件滚动归档
+            (SizeAndTimeBasedRollingPolicy 是 Logback 1.3+ 推荐写法),
+            达到 max-file-size 或跨天即滚动, 保留 max-history 个归档,
+            总大小达到 total-size-cap 删除最旧的 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 当前写入的日志文件 -->
+        <file>${APP_LOG_FILE}</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- 归档文件命名模板 -->
+            <fileNamePattern>${APP_LOG_PATTERN}</fileNamePattern>
+            <!-- 单个文件达到 10MB 触发滚动 -->
+            <maxFileSize>10MB</maxFileSize>
+            <!-- 最多保留 30 个归档文件 -->
+            <maxHistory>30</maxHistory>
+            <!-- 归档总大小上限 300MB, 超出删除最旧的 -->
+            <totalSizeCap>300MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 4) 级别设置: root 兜底 INFO, 某个包可单独设级别(优先级更高), 想见 DEBUG 日志改这里 -->
+    <logger name="org.demo.logging.controller" level="INFO"/>
+
+    <!-- root: 全局兜底, 未单独配置的 logger 都走这里; 关联两个 appender -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+</configuration>
