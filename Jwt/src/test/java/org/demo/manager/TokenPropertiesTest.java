@@ -1,5 +1,6 @@
 package org.demo.manager;
 
+import org.demo.manager.jwt.TokenProperties;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;

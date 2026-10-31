@@ -136,8 +136,21 @@ Jwt的工作流程包含两个部分：
 **相关类:**
 
 - [TokenManager](./src/main/java/org/demo/manager/jwt/TokenManager.java)  
-  主要职责：JWT 的生成、校验、解析的统一入口。  
-  主要方法：`generateToken`、`validateToken`、`parseToken`
+  主要职责：JWT 生成与解析的统一接口。  
+  主要方法：`create`、`parse`、`validate`
+
+- [JWTManager](./src/main/java/org/demo/manager/jwt/JWTManager.java)  
+  主要职责：`TokenManager` 接口的实现，基于 `TokenProperties` 完成 JWT 的生成与解析。  
+  主要方法：`create`、`parse`
+
+- [ParsedToken](./src/main/java/org/demo/manager/jwt/ParsedToken.java)  
+  主要职责：已完成验签的 JWT 只读对象，提供 `get`、`getString`、`getInteger`、`getLong` 等读取方法。
+
+- [UserContext](./src/main/java/org/demo/context/UserContext.java)  
+  主要职责：基于 `ThreadLocal` 保存当前请求的用户信息，提供 `set`、`get`、`getUserId`、`clear` 等方法。
+
+- [UserInfo](./src/main/java/org/demo/context/UserInfo.java)  
+  主要职责：当前登录用户信息，目前包含 `userId` 和 `subject`。
 
 - [TokenProperties](./src/main/java/org/demo/manager/jwt/TokenProperties.java)  
   主要职责：JWT 相关配置的载体，自动绑定 application.yml 配置。参考application.yml配置如下：
@@ -149,5 +162,19 @@ Jwt的工作流程包含两个部分：
         expiration-seconds: 86400 # Token有效期，单位秒（如 24 小时）
     ```
 
-- [JwtUtil](./src/main/java/org/demo/manager/jwt/JwtUtil.java)  
-  主要职责：底层 JWT 生成与解析的工具方法，供 TokenManager 调用。
+拦截器验签成功后会把用户信息写入 `UserContext`，请求结束时清理。控制器可以直接读取：
+
+```java
+@GetMapping("/accessResource")
+public String hello() {
+    UserInfo userInfo = UserContext.get();
+    Integer userId = userInfo.userId();
+    return "Hello World!";
+}
+```
+
+> `UserContext` 使用 `ThreadLocal`，仅适用于同步请求；`@Async`、线程池或 WebFlux 场景需要额外做上下文传播。
+
+### 认证失败处理
+
+拦截器在缺少 `Bearer` Token、Token 为空、签名无效或已过期时抛出 `ResponseStatusException(HttpStatus.UNAUTHORIZED)`，由 Spring MVC 的统一异常解析器返回 401。

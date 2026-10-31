@@ -2,6 +2,8 @@ package org.demo.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.demo.context.UserContext;
+import org.demo.context.UserInfo;
 import org.demo.manager.jwt.TokenManager;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +22,8 @@ public class UserController {
 
     @GetMapping("/accessResource")
     public String hello() {
-        log.info("访问受保护资源");
+        UserInfo userInfo = UserContext.get();
+        log.info("访问受保护资源，userId={}", userInfo.userId());
         return "Hello World!";
     }
 
@@ -29,6 +32,6 @@ public class UserController {
         log.info("获取令牌");
         HashMap<String, Object> payload = new HashMap<>();
         payload.put("userId", 1);
-        return tokenManager.generatorToken(payload);
+        return tokenManager.create(payload);
     }
 }

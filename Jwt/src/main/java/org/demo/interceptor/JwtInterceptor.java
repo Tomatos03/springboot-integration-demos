@@ -1,12 +1,18 @@
 package org.demo.interceptor;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.demo.context.UserContext;
+import org.demo.context.UserInfo;
+import org.demo.manager.jwt.ParsedToken;
 import org.demo.manager.jwt.TokenManager;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
@@ -17,6 +23,8 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @Component
 @RequiredArgsConstructor
 public class JwtInterceptor implements HandlerInterceptor {
+    private static final String TOKEN_PREFIX = "Bearer ";
+
     private final TokenManager tokenManager;
 
     @Override
@@ -25,17 +33,38 @@ public class JwtInterceptor implements HandlerInterceptor {
             log.info("请求静态资源，无需 JWT 验证，URI: {}", request.getRequestURI());
             return true;
         }
+        UserContext.clear();
 
-        String token;
-        if (
-                ((token = extractToken(request)) != null)
-                && tokenManager.validateToken(token)
-        ) {
+        try {
+            String token = extractToken(request);
+            ParsedToken parsedToken = tokenManager.parse(token);
+            UserContext.set(new UserInfo(parsedToken.getInteger("userId"), parsedToken.subject()));
             log.info("请求通过 JWT 验证，URI: {}", request.getRequestURI());
             return true;
+        } catch (IllegalArgumentException | JwtException ex) {
+            handleAuthFailure(request, response, ex);
+            return false;
         }
-        log.info("请求未通过 JWT 验证，URI: {}", request.getRequestURI());
-        return false;
+    }
+
+    private void handleAuthFailure(HttpServletRequest request, HttpServletResponse response, Exception ex) {
+        UserContext.clear();
+
+        int status = HttpServletResponse.SC_UNAUTHORIZED;
+        String reason = ex.getMessage();
+        if (ex instanceof ResponseStatusException responseStatusException) {
+            status = responseStatusException.getStatusCode().value();
+            reason = responseStatusException.getReason();
+        }
+
+        response.setStatus(status);
+        log.info("请求未通过 JWT 验证，URI: {}，原因: {}", request.getRequestURI(), reason);
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
+                                Object handler, Exception ex) {
+        UserContext.clear();
     }
 
     private boolean isStaticResource(Object handler) {
@@ -44,13 +73,14 @@ public class JwtInterceptor implements HandlerInterceptor {
 
     private String extractToken(HttpServletRequest request) {
         String authorization = request.getHeader("Authorization");
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            // 提取 token 部分
-            // "Bearer " 长度为7
-            return authorization.substring(7);
-        } else {
-            // 没有携带token或格式不正确，可以返回null或抛异常
-            return null;
+        if (authorization == null || !authorization.startsWith(TOKEN_PREFIX)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "缺少 Bearer Token");
         }
+
+        String token = authorization.substring(TOKEN_PREFIX.length());
+        if (token.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bearer Token 不能为空");
+        }
+        return token;
     }
 }

@@ -14,7 +14,7 @@ import org.springframework.util.StringUtils;
  * @date : 2026/3/31
  */
 @Component
-@ConfigurationProperties(prefix = "jwt.token")
+@ConfigurationProperties(prefix = "token")
 @Getter
 @Setter
 public class TokenProperties {
@@ -31,10 +31,10 @@ public class TokenProperties {
     @PostConstruct
     public void validate() {
         if (!StringUtils.hasText(secret)) {
-            throw new IllegalArgumentException("jwt.token.secret must not be blank");
+            throw new IllegalArgumentException("token.secret must not be blank");
         }
         if (expirationSeconds <= 0) {
-            throw new IllegalArgumentException("jwt.token.expiration-seconds must be greater than 0");
+            throw new IllegalArgumentException("token.expiration-seconds must be greater than 0");
         }
     }
 }
