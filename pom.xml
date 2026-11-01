@@ -22,6 +22,7 @@
         <module>swagger3</module>
         <module>mybatis</module>
         <module>Jwt</module>
+        <module>jwt-dual-token</module>
         <module>spring-security</module>
         <module>spring-task</module>
         <module>mybatis-plus</module>
@@ -41,6 +42,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mybatis-plus-starter-version>3.5.14</mybatis-plus-starter-version>
         <mybatis-plus-jsqlparser-version>3.5.14</mybatis-plus-jsqlparser-version>
+        <hutool.version>5.8.48</hutool.version>
     </properties>
 
     <dependencyManagement>
@@ -68,6 +70,11 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>${hutool.version}</version>
         </dependency>
     </dependencies>
 

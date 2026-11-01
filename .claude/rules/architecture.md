@@ -30,6 +30,7 @@
 | 模块 | 技术 / 说明 |
 |---|---|
 | `Jwt` | JJWT + HandlerInterceptor 的手写 Token 鉴权 demo（无 Spring Security） |
+| `jwt-dual-token` | 双 Token 方案：access token 访问资源、refresh token 轮换刷新，带 jti 白名单与重放检测（内存存储，无 Spring Security）；默认 8084 |
 | `spring-security` | 聚合模块：`common`（共享的 Security 配置/Result/异常处理器）+ 4 个独立子应用 —— `basic-auth`、`form-auth`（登录签发 JWT 存 Redis）、`sms-auth`（手机号+验证码，Redis）、`oauth2-auth`（GitHub 第三方登录）。**每个子应用都依赖兄弟模块 `common`**，单独运行前需先把 `common` 装进本地仓库 |
 
 ### API 文档 / 搜索 / 测试
@@ -68,6 +69,7 @@
 | basic-auth / account-service | 8081 |
 | redis / order-service | 8082 |
 | elasticsearch / storage-service | 8083 |
+| jwt-dual-token | 8084 |
 | spring-jpa-demo | 7777 |
 | alibaba-gateway | 8888 |
 | rabbitmq producer / consumer | 无 Web 端口（纯 AMQP） |
